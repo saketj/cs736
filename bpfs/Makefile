@@ -60,7 +60,7 @@ hash_map.o: hash_map.c hash_map.h vector.h pool.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 bpfs: bpfs.o crawler.o indirect_cow.o mkbpfs.o dcache.o hash_map.o vector.o
-	$(CC) $(CFLAGS) `pkg-config --libs fuse` -luuid -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ `pkg-config --libs fuse` -luuid
 
 mkfs.bpfs: mkfs.bpfs.o mkbpfs.o
-	$(CC) $(CFLAGS) -luuid -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -luuid

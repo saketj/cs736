@@ -1,0 +1,37 @@
+1. sudo apt-get install uuid-dev
+
+2. Install FUSE
+cd fuse-2.9.5/
+./configure
+make -j8
+sudo make install
+
+3. Install BPFS
+cd bpfs
+make
+
+Creating a BPFS file system
+
+BPFS can use a memory-mapped file/device or run in DRAM:
+
+mkdir /tmp/bpfs
+
+- To use a file/device:
+  1. (File) Create the file. E.g., dd if=/dev/zero of=bpram.img bs=1M count=$N 
+  ($N=1024 to create 1GB file)
+  2. Format the file system: ./mkfs.bpfs bpram.img
+  3. Mount the file system: ./bpfs -f bpram.img -d /tmp/bpfs
+  /tmp/bpfs is the mountpoint
+
+- To use DRAM (no need to create a file and contents are lost at exit):
+  1. ./bpfs -s $((N * 1024 * 1024)) -d /tmp/bpfs
+  -d option to run bpfs in debug mode
+  ($N=1024 to create 1GB filesystem)
+
+4. To use the file system:
+cd /tmp/bpfs
+touch foo
+echo "hello" >> foo
+(Basically, you can issue file and directory operations as you normally do on any filesystem)
+
+There are several configuration macros at the top of bpfs.h and bpfs.c.
