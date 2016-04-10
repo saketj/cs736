@@ -1,0 +1,149 @@
+
+# Created by https://www.gitignore.io/api/c++,cmake,eclipse,linux,premake-gmake
+
+### C++ ###
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+
+### CMake ###
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
+
+### Eclipse ###
+
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# Eclipse Core
+.project
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# PyDev specific (Python IDE for Eclipse)
+*.pydevproject
+
+# CDT-specific (C/C++ Development Tooling)
+.cproject
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# Java annotation processor (APT)
+.factorypath
+
+# PDT-specific (PHP Development Tools)
+.buildpath
+
+# sbteclipse plugin
+.target
+
+# Tern plugin
+.tern-project
+
+# TeXlipse plugin
+.texlipse
+
+# STS (Spring Tool Suite)
+.springBeans
+
+# Code Recommenders
+.recommenders/
+
+
+### Linux ###
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+
+### premake-gmake ###
+Makefile
+*.make
+obj/
+
+
+### FUSE ###
+bpfs/TAGS
+bpfs/bpfs
+bpfs/mkfs.bpfs
+bpfs/pwrite
+bpfs/tags
+fuse-2.9.5/autom4te.cache/
+fuse-2.9.5/config.log
+fuse-2.9.5/config.status
+fuse-2.9.5/example/.deps/
+fuse-2.9.5/example/.libs/
+fuse-2.9.5/example/cusexmp
+fuse-2.9.5/example/fioc
+fuse-2.9.5/example/fioclient
+fuse-2.9.5/example/fsel
+fuse-2.9.5/example/fselclient
+fuse-2.9.5/example/fusexmp
+fuse-2.9.5/example/fusexmp_fh
+fuse-2.9.5/example/hello
+fuse-2.9.5/example/hello_ll
+fuse-2.9.5/example/null
+fuse-2.9.5/fuse.pc
+fuse-2.9.5/include/config.h
+fuse-2.9.5/include/stamp-h1
+fuse-2.9.5/lib/.deps/
+fuse-2.9.5/lib/.libs/
+fuse-2.9.5/lib/modules/.deps/
+fuse-2.9.5/lib/modules/.dirstamp
+fuse-2.9.5/libtool
+fuse-2.9.5/util/.deps/
+fuse-2.9.5/util/fusermount
+fuse-2.9.5/util/mount.fuse
+fuse-2.9.5/util/ulockmgr_server
