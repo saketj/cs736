@@ -7,7 +7,7 @@
 #include <string.h>
 #include <assert.h>
 
-int readBlock(const char *fileName, uint blockNumber, char *buf), uint blockSize;
+int readBlock(const char *fileName, uint blockNumber, char *buf, uint blockSize);
 int freeBlock(const char *fileName, uint blockNumber, uint blockSize);
 int writeBlock(const char fileName, char *buf, int blockNumber, uint blockSize);
 

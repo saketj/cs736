@@ -6,6 +6,7 @@
 #include "bpfs.h"
 #include "indirect_cow.h"
 #include "util.h"
+#include "diskmanager.h"
 
 #include <sys/mman.h>
 #include <unistd.h>

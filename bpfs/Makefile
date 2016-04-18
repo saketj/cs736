@@ -49,11 +49,14 @@ crawler.o: crawler.c crawler.h bpfs.h bpfs_structs.h util.h
 
 mkbpfs.o: mkbpfs.c mkbpfs.h bpfs.h bpfs_structs.h util.h
 	$(CC) $(CFLAGS) -c -o $@ $<
-
+	
 dcache.o: dcache.c dcache.h hash_map.h util.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 vector.o: vector.c vector.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+diskmanager.o: diskmanager.c diskmanager.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 hash_map.o: hash_map.c hash_map.h vector.h pool.h
