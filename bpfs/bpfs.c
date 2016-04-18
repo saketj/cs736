@@ -9,11 +9,10 @@
 #include "indirect_cow.h"
 #include "util.h"
 #include "hash_map.h"
-<<<<<<< HEAD
+
 #include "anti_cache_manager.h"
-=======
- #include "diskmanager.h"
->>>>>>> 181f5062baf3eaead48027c47e5237ebbf18933b
+#include "diskmanager.h"
+
 
 #define FUSE_USE_VERSION FUSE_MAKE_VERSION(2, 8)
 #include <fuse/fuse_lowlevel.h>
