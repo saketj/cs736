@@ -15,12 +15,23 @@ int initializeDiskManager(const char *fileName, uint fileSize, uint blockSize);
 
 const char *diskManagerFileName;
 
-uint fileSize;
+uint64_t fileSize;
 
-uint totalBlockCount;
+uint64_t totalBlockCount;
 
-uint currentBlockNumber=0;
+uint64_t currentDiskBlockNumber=0;
 
+uint64_t diskManagerBlockSize;
+
+struct freeListNode
+{
+	uint64_t blockNumber;
+	struct freeListNode *next;
+};
+
+struct freeListNode *freeList=NULL;
+
+//Fragmentation Avoidance Part
 
 
 
