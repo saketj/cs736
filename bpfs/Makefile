@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -g
+LDFLAGS = -lpthread
 # Remove debug checks:
 #CFLAGS += -DNDEBUG
 # Enable optimizations:
@@ -12,10 +13,11 @@ CFLAGS = -Wall -g
 .PHONY: all clean
 
 BIN = bpfs mkfs.bpfs pwrite
-OBJS = bpfs.o crawler.o indirect_cow.o mkfs.bpfs.o mkbpfs.o dcache.o \
-       hash_map.o vector.o
+OBJS = bpfs.o anti_cache_manager.o crawler.o indirect_cow.o mkfs.bpfs.o \
+       mkbpfs.o dcache.o hash_map.o vector.o
 TAGS = tags TAGS
-SRCS = bpfs_structs.h bpfs.h bpfs.c crawler.h crawler.c dcache.h dcache.c \
+SRCS = bpfs_structs.h bpfs.h bpfs.c anti_cache_manager.c anti_cache_manager.h \
+			 crawler.h crawler.c dcache.h dcache.c \
        indirect_cow.h indirect_cow.c mkbpfs.h mkbpfs.c mkfs.bpfs.c \
        util.h hash_map.h hash_map.c vector.h vector.c pool.h pwrite.c
 # Non-compile sources (at least, for this Makefile):
@@ -33,11 +35,14 @@ TAGS: $(SRCS) $(NCSRCS)
 	@echo + ctags TAGS
 	@if ctags --version | grep -q Exuberant; then ctags -e $(SRCS) $(NCSRCS); else touch $@; fi
 
-bpfs.o: bpfs.c bpfs_structs.h bpfs.h crawler.h indirect_cow.h \
-	mkbpfs.h dcache.h util.h hash_map.h
+bpfs.o: bpfs.c anti_cache_manager.h bpfs_structs.h bpfs.h crawler.h  \
+	indirect_cow.h mkbpfs.h dcache.h util.h hash_map.h
 	$(CC) $(CFLAGS) `pkg-config --cflags fuse` -c -o $@ $<
 
 mkfs.bpfs.o: mkfs.bpfs.c mkbpfs.h util.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+anti_cache_manager.o: anti_cache_manager.c anti_cache_manager.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 indirect_cow.o: indirect_cow.c indirect_cow.h bpfs.h bpfs_structs.h util.h \
@@ -59,8 +64,8 @@ vector.o: vector.c vector.h
 hash_map.o: hash_map.c hash_map.h vector.h pool.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-bpfs: bpfs.o crawler.o indirect_cow.o mkbpfs.o dcache.o hash_map.o vector.o
-	$(CC) $(CFLAGS) -o $@ $^ `pkg-config --libs fuse` -luuid
+bpfs: bpfs.o anti_cache_manager.o crawler.o indirect_cow.o mkbpfs.o dcache.o hash_map.o vector.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ `pkg-config --libs fuse` -luuid
 
 mkfs.bpfs: mkfs.bpfs.o mkbpfs.o
 	$(CC) $(CFLAGS) -o $@ $^ -luuid

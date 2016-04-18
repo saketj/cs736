@@ -9,6 +9,7 @@
 #include "indirect_cow.h"
 #include "util.h"
 #include "hash_map.h"
+#include "anti_cache_manager.h"
 
 #define FUSE_USE_VERSION FUSE_MAKE_VERSION(2, 8)
 #include <fuse/fuse_lowlevel.h>
@@ -3957,6 +3958,12 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	// Initialize and start the anti_cache_manager thread
+	if (anti_cache_manager_init() != ANTI_CACHE_INIT_SUCCESS) {
+		fprintf(stderr, "Failed to start the Anti-Cache Manager thread.\n");
+		return -1;
+	}
+
 	set_super(get_bpram_super());
 
 	if (bpfs_super->magic != BPFS_FS_MAGIC)
@@ -4143,6 +4150,12 @@ int main(int argc, char **argv)
 	indirect_cow_destroy();
 #endif
 	destroy_bpram();
+
+	//  Destroy the anti_cache_manager thread
+	if (anti_cache_manager_destroy() != ANTI_CACHE_DESTROY_SUCCESS) {
+		fprintf(stderr, "Failed to destroy the Anti-Cache Manager thread safely.\n");
+		return -1;
+	}
 
 	return r;
 }
