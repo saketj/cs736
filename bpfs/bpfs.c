@@ -3318,12 +3318,8 @@ static void fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
 static int callback_read(uint64_t blockoff, char *block, unsigned off,
 		unsigned size, unsigned valid, uint64_t crawl_start, enum commit commit,
 		void *iov_void, uint64_t *new_blockno) {
-	printf("%x\n", *new_blockno);
-	uint64_t no = 1;
-	no = no << 63;
-	printf("%ld\n", no);
-	printf("%ld\n", no >> 63);
-
+	printf("%ld\n", *new_blockno);
+	anti_cache_manager_access(*new_blockno);
 	struct iovec *iov = iov_void;
 	iov += blockoff - crawl_start / BPFS_BLOCK_SIZE;
 	iov->iov_base = block + off;

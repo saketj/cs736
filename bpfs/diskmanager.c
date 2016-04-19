@@ -5,13 +5,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
 
-int initializeDiskManager(const char *fileName, uint64_t size, uint64_t blockSize)
+void initializeDiskManager(const char *fileName, uint64_t size, uint64_t blockSize)
 {
 
   diskManagerFileName = strdup(fileName);
@@ -25,9 +26,9 @@ int initializeDiskManager(const char *fileName, uint64_t size, uint64_t blockSiz
 //TODO (Siddharth) - Assert statements everywhere to verify input, size of buffer.etc
 int readBlock(const char *fileName, uint64_t blockNumber, char *buf){
 
-int fd = xsyscall(open(fileName, O_RDWR));
+int fd = open(fileName, O_RDWR);
 uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
-r = pread(fd, buf, diskManagerBlockSize, offset);
+int r = pread(fd, buf, diskManagerBlockSize, offset);
 close(fd);
 return 1;
 	
@@ -37,14 +38,15 @@ return 1;
 void addBlockToFreeList(uint blockNumber)
 {
 
-   struct freeListNode *temp= (struct freeListNode *)malloc(sizeof(freeList));
+   struct freeListNode *temp= (struct freeListNode *)malloc(sizeof(struct freeListNode));
    temp->blockNumber=blockNumber;
    temp->next=NULL;
 
   if(freeList==NULL)
   {
   	 
-     freeList=freeListNode; 
+     freeList=temp;
+     return; 
   }
 
   temp->next=freeList;
@@ -73,12 +75,13 @@ uint64_t getBlockFromFreeList()
 int freeBlock(const char *fileName, uint64_t blockNumber){
 
 char block[diskManagerBlockSize];
-for(int i=0;i<diskManagerBlockSize;i++)
-	block[i]='';
+int i;
+for(i=0;i<diskManagerBlockSize;i++)
+	block[i]="";
 
-int fd = xsyscall(open(fileName, O_RDWR));
+int fd = open(fileName, O_RDWR);
 uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
-r = pwrite(fd, block, diskManagerBlockSize, offset);
+int r = pwrite(fd, block, diskManagerBlockSize, offset);
 close(fd);
 addBlockToFreeList(blockNumber);
 return 1;
@@ -91,9 +94,9 @@ if(blockNumber == -1)
 {
 	return -1; //failure to write block. couldnt find free block
 }
-int fd = xsyscall(open(fileName, O_RDWR));
+int fd = open(fileName, O_RDWR);
 uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
-r = pwrite(fd, buf, diskManagerBlockSize, offset);
+int r = pwrite(fd, buf, diskManagerBlockSize, offset);
 close(fd);
 
 return 1;
