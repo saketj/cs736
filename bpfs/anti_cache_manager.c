@@ -79,6 +79,7 @@ void lru_staging_queue_init(lru_node_queue_t **staging_queue) {
 
 int anti_cache_manager_evict_to_disk(int block_num) {
 	// Evict the blocks to disk here.
+	//TODO (Siddharth Suresh) - Disk Manager
 	if (indir_mapping[block_num] != 0) {
 		struct stat st;
 		char *filename = "/tmp/1";

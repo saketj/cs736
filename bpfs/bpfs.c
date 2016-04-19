@@ -713,6 +713,7 @@ char* get_block(uint64_t blockno) {
 	if (blockno & no) {
 		uint64_t blockno_bt = blockno ^ no;
 		struct stat st;
+		//TODO (Siddharth Suresh) - Disk Manager
 		char *filename = "/tmp/1";
 		printf("%ld\n", blockno_bt);
 		assert(stat(filename, &st) == 0);
@@ -3639,7 +3640,7 @@ int main(int argc, char **argv) {
 	int r = -1;
 
 	xassert(!hash_map_init());
-
+    //TODO (Siddharth Suresh) - Disk Manager
 	if (argc < 3) {
 		fprintf(stderr, "%s: <-f FILE|-s SIZE> [FUSE...]\n", argv[0]);
 		exit(1);
