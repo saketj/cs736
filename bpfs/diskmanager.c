@@ -38,7 +38,7 @@ return 1;
 void addBlockToFreeList(uint blockNumber)
 {
 
-   struct freeListNode *temp= (struct freeListNode *)malloc(sizeof(freeListNode));
+   struct freeListNode *temp= (struct freeListNode *)malloc(sizeof(struct freeListNode));
    temp->blockNumber=blockNumber;
    temp->next=NULL;
 
