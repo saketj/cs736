@@ -13,14 +13,14 @@
 #define ANTI_CACHE_DESTROY_SUCCESS 0
 #define ANTI_CACHE_DESTROY_FAILURE 1
 
-#define ANTI_CACHE_INVOCATION_INTERVAL 1000000  // in microseconds.
+#define ANTI_CACHE_INVOCATION_INTERVAL 20000000  // in microseconds.
 
 struct lru_t {
 
 };
 
 struct anti_cache_manager_state_t {
-  struct lru_t *lru;
+	struct lru_t *lru;
 };
 
 int anti_cache_manager_init(void);
