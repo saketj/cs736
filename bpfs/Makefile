@@ -42,6 +42,9 @@ bpfs.o: bpfs.c anti_cache_manager.h bpfs_structs.h bpfs.h crawler.h  \
 mkfs.bpfs.o: mkfs.bpfs.c mkbpfs.h util.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+diskmanager.o: diskmanager.c diskmanager.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+	
 anti_cache_manager.o: anti_cache_manager.c anti_cache_manager.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
@@ -61,13 +64,11 @@ dcache.o: dcache.c dcache.h hash_map.h util.h
 vector.o: vector.c vector.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-diskmanager.o: diskmanager.c diskmanager.h
-	$(CC) $(CFLAGS) -c -o $@ $<
 
 hash_map.o: hash_map.c hash_map.h vector.h pool.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-bpfs: bpfs.o anti_cache_manager.o crawler.o indirect_cow.o mkbpfs.o dcache.o hash_map.o vector.o
+bpfs: bpfs.o anti_cache_manager.o crawler.o indirect_cow.o mkbpfs.o dcache.o hash_map.o vector.o diskmanager.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ `pkg-config --libs fuse` -luuid
 
 mkfs.bpfs: mkfs.bpfs.o mkbpfs.o
