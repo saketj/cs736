@@ -692,7 +692,7 @@ char* get_block(uint64_t blockno) {
 		assert(0);
 		return NULL;
 	}
-	static_assert(BPFS_BLOCKNO_INVALID == 0);
+	assert(BPFS_BLOCKNO_INVALID == 0);
 	if (blockno > bpfs_super->nblocks) {
 		//assert(0);
 		//return NULL;
