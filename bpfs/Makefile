@@ -42,7 +42,7 @@ bpfs.o: bpfs.c anti_cache_manager.h bpfs_structs.h bpfs.h crawler.h  \
 mkfs.bpfs.o: mkfs.bpfs.c mkbpfs.h util.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-anti_cache_manager.o: anti_cache_manager.c anti_cache_manager.h
+anti_cache_manager.o: anti_cache_manager.c anti_cache_manager.h hash_map.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 indirect_cow.o: indirect_cow.c indirect_cow.h bpfs.h bpfs_structs.h util.h \
