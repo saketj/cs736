@@ -170,10 +170,13 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 int anti_cache_manager_update_lru() {
 	// Move accessed block to lru from staging queue.
 	lru_node_t *node = lru_staging_queue_pop();
+	int added_blocks_count = 0;
 	while (node != NULL) {
 		lru_push(node);
 		node = lru_staging_queue_pop();
+		++added_blocks_count;
 	}
+	return added_blocks_count;
 }
 
 int anti_cache_manager_evict_blocks() {
