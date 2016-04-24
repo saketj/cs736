@@ -7,8 +7,6 @@
 
 #include <inttypes.h>
 
-#include "hash_map.h"
-
 #define ANTI_CACHE_INIT_SUCCESS 0
 #define ANTI_CACHE_INIT_FAILURE 1
 
@@ -21,8 +19,8 @@
 #define ANTI_CACHE_BLOCK_EVICTION_SUCCESS 0
 #define ANTI_CACHE_BLOCK_EVICTION_FAILURE 1
 
-#define ANTI_CACHE_INVOCATION_INTERVAL 1000000  // in microseconds.
-#define ANTI_CACHE_EVICTION_THRESHOLD 5
+#define ANTI_CACHE_INVOCATION_INTERVAL 10000000  // in microseconds.
+#define ANTI_CACHE_EVICTION_THRESHOLD 10
 
 typedef struct lru_node lru_node_t;
 typedef struct lru_node_queue lru_node_queue_t;
@@ -50,7 +48,7 @@ struct lru_linked_list {
 struct lru {
   uint64_t _num_elements;
   lru_linked_list_t *_lru_linked_list;
-  hash_map_t *_lru_hash_map;
+  void *_lru_hash_map;
 };
 
 
