@@ -13,13 +13,13 @@
 #include <string.h>
 #include <assert.h>
 
-int readBlock(const char *fileName, uint64_t blockNumber, char *buf);
-int freeBlock(const char *fileName, uint64_t blockNumber);
-int writeBlock(const char fileName, char *buf);
-void initializeDiskManager(const char *fileName, uint64_t fileSize, uint64_t blockSize);
+int readBlock(uint64_t blockNumber, char *buf);
+int freeBlock(uint64_t blockNumber);
+int writeBlock(char *buf);
+void initializeDiskManager(char *fileName, uint64_t fileSize, uint64_t blockSize);
 
 
-const char *diskManagerFileName;
+char *diskManagerFileName;
 
 uint64_t fileSize;
 

@@ -714,15 +714,17 @@ char* get_block(uint64_t blockno) {
 		uint64_t blockno_bt = blockno ^ no;
 		struct stat st;
 		//TODO (Siddharth Suresh) - Disk Manager
-		char *filename = "/tmp/1";
+	
 		printf("%ld\n", blockno_bt);
-		assert(stat(filename, &st) == 0);
+		assert(stat(diskManagerFileName, &st) == 0);
 		//assert((blockno_bt + 1) * 4096 == st.st_size);
-		int fd = open(filename, O_RDONLY);
-		assert(fd > 0);
-		char * buf = (char *) malloc(4096);
-		assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
-		assert(close(fd) == 0);
+		
+		//int fd = open(filename, O_RDONLY);
+		//assert(fd > 0);
+		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
+		assert(readBlock(blockno_bt,buf)==1);
+		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
+		//assert(close(fd) == 0);
 		return buf;
 	}
 
@@ -3638,6 +3640,8 @@ int main(int argc, char **argv) {
 	int fargc;
 	char **fargv;
 	int r = -1;
+    
+	initializeDiskManager("/tmp/1",DISK_SIZE,DISK_BLOCK_SIZE);
 
 	xassert(!hash_map_init());
     //TODO (Siddharth Suresh) - Disk Manager

@@ -12,24 +12,26 @@
 #include <assert.h>
 
 
-void initializeDiskManager(const char *fileName, uint64_t size, uint64_t blockSize)
+void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize)
 {
-
+  printf("Initializing Disk Manager with filename %s, size of file: %ld and block size: %ld\n",fileName,&size,&blockSize);
   diskManagerFileName = strdup(fileName);
   fileSize=size;
   totalBlockCount=fileSize/blockSize;
   diskManagerBlockSize=blockSize;
-  
+  printf("Completed Initializing Disk Manager\n");
 
 }
 
 //TODO (Siddharth) - Assert statements everywhere to verify input, size of buffer.etc
-int readBlock(const char *fileName, uint64_t blockNumber, char *buf){
+int readBlock(uint64_t blockNumber, char *buf){
 
-int fd = open(fileName, O_RDWR);
+printf("Inside Disk Manager readBlock for blockNumber: %ld\n",&blockNumber);
+int fd = open(diskManagerFileName, O_RDWR);
 uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
-int r = pread(fd, buf, diskManagerBlockSize, offset);
-close(fd);
+assert(pread(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
+assert(close(fd)==0);
+printf("Completed reading block number %ld and contents are %s\n",&blockNumber,buf);
 return 1;
 	
 }
@@ -37,95 +39,92 @@ return 1;
 
 void addBlockToFreeList(uint blockNumber)
 {
-
+   printf("Inside addBlockToFreeList: %ld\n",&blockNumber);
    struct freeListNode *temp= (struct freeListNode *)malloc(sizeof(struct freeListNode));
    temp->blockNumber=blockNumber;
    temp->next=NULL;
-
   if(freeList==NULL)
   {
   	 
      freeList=temp;
      return; 
   }
-
   temp->next=freeList;
   freeList=temp;
-
 }
 
 
-uint64_t getBlockFromFreeList()
-{
+uint64_t getBlockFromFreeList(){
 
   if(freeList==NULL)
   {
   	return -1;
   }
-
+  printf("Inside disk manager getBlockFromFreeList\n");
   uint64_t bNumber=freeList->blockNumber;
   struct freeListNode *temp=freeList;
   freeList=freeList->next;
   free(temp);
-
+  printf("FreeList block number: %ld",&bNumber);
   return bNumber;
-
 }
 
-int freeBlock(const char *fileName, uint64_t blockNumber){
+int freeBlock(uint64_t blockNumber){
 
+printf("Inside disk manager freeBlock with block number %ld\n",&blockNumber);
 char block[diskManagerBlockSize];
 int i;
 for(i=0;i<diskManagerBlockSize;i++)
 	block[i]="";
 
-int fd = open(fileName, O_RDWR);
+int fd = open(diskManagerFileName, O_RDWR);
 uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
-int r = pwrite(fd, block, diskManagerBlockSize, offset);
-close(fd);
+assert(pwrite(fd, block, diskManagerBlockSize, offset)==diskManagerBlockSize);
+assert(close(fd)==0);
+printf("Completed freeing block on disk\n");
 addBlockToFreeList(blockNumber);
 return 1;
 }
 
-int writeBlock(const char fileName, char *buf){
-
+int writeBlock(char *buf){
+printf("Inside Disk Manager writeBlock\n");
+printf("Calling findfreeblock\n");
 uint64_t blockNumber = findFreeBlock();
 if(blockNumber == -1)
 {
 	return -1; //failure to write block. couldnt find free block
 }
-int fd = open(fileName, O_RDWR);
+printf("New block number from findfreeblock: %ld\n",&blockNumber);
+int fd = open(diskManagerFileName, O_RDWR);
 uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
-int r = pwrite(fd, buf, diskManagerBlockSize, offset);
-close(fd);
-
+assert(pwrite(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
+assert(close(fd)==0);
+printf("Completed writing to disk\n");
 return 1;
 }
 
 
-int findFreeBlock()
-{
+int findFreeBlock(){
 
+  printf("Inside Disk Manager findFreeBlock\n"); 
   uint64_t blockNumber;
   if(currentDiskBlockNumber >= (totalBlockCount-1))
   {
+      printf("current block number has exceeded disk space.. Fetching blocks from free list\n");
   	  uint64_t freeListBlockNumber = getBlockFromFreeList();
   	  if(freeListBlockNumber == -1)
   	  {
+        printf("No free blocks on disk\n");
   	  	return -1;  //No space in file to allocate
   	  }
-       
+      
       blockNumber = freeListBlockNumber;
-
   }
-
   else
   {
       blockNumber = currentDiskBlockNumber;
       currentDiskBlockNumber++;
-  }
-
-  
+  }  
+  printf("Free block number: %ld\n",&blockNumber); 
   return blockNumber;
-
 }

@@ -5,6 +5,7 @@
 #include "anti_cache_manager.h"
 #include "hash_map.h"
 #include "bpfs.h"
+#include "diskmanager.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -131,22 +132,23 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 	//TODO (Siddharth Suresh) - Disk Manager
 	if (indir_mapping[block_num] != 0) {
 		struct stat st;
-		char *filename = "/tmp/1";
-		int fs = stat(filename, &st);
+		//char *filename = "/tmp/1";
+		int fs = stat(diskManagerFileName, &st);
 
 		long int size = 0;
 		if (fs == 0) {
 			size = st.st_size;
 			printf("%ld\n", size);
 		}
-
-		int fd = open(filename, O_RDWR);
-		assert(fd > 0);
+        
+		//int fd = open(filename, O_RDWR);
+		//assert(fd > 0);
 		char *buf = get_block(block_num);
-		assert(pwrite(fd, buf, 4096, size) == 4096);
-		assert(close(fd) == 0);
+		int disk_block_no=writeBlock(buf);
+		//assert(pwrite(fd, buf, 4096, size) == 4096);
+		//assert(close(fd) == 0);
 
-		uint64_t newpos = size / 4096;
+		uint64_t newpos = disk_block_no;
 		uint64_t no = 1;
 		no = no << 63;
 		uint64_t blockno = newpos | no;
