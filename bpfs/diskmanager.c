@@ -28,7 +28,7 @@ int readBlock(uint64_t blockNumber, char *buf){
 
 printf("Inside Disk Manager readBlock for blockNumber: %ld\n",blockNumber);
 int fd = open(diskManagerFileName, O_RDWR);
-uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
+uint64_t offset = (blockNumber)*diskManagerBlockSize;
 assert(pread(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
 assert(close(fd)==0);
 printf("Completed reading block number %ld and contents are %s\n",blockNumber,buf);
@@ -78,7 +78,7 @@ for(i=0;i<diskManagerBlockSize;i++)
 	block[i]="";
 
 int fd = open(diskManagerFileName, O_RDWR);
-uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
+uint64_t offset = (blockNumber)*diskManagerBlockSize;
 assert(pwrite(fd, block, diskManagerBlockSize, offset)==diskManagerBlockSize);
 assert(close(fd)==0);
 printf("Completed freeing block on disk\n");
@@ -96,7 +96,7 @@ if(blockNumber == -1)
 }
 printf("New block number from findfreeblock: %ld\n",blockNumber);
 int fd = open(diskManagerFileName, O_RDWR);
-uint64_t offset = (blockNumber-1)*diskManagerBlockSize;
+uint64_t offset = (blockNumber)*diskManagerBlockSize;
 assert(pwrite(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
 assert(close(fd)==0);
 printf("Completed writing to disk\n");
