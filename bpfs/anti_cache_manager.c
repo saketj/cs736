@@ -62,11 +62,60 @@ lru_node_t* lru_staging_queue_pop() {
 	return node;
 }
 
+void lru_push(lru_node_t *node) {
+	if (state->_lru->_num_elements == 0) {
+		state->_lru->_lru_linked_list->_head = node;
+		state->_lru->_lru_linked_list->_tail = node;
+		hash_map_insert(state->_lru->_lru_hash_map,
+									  (void *) &node->_blockno,
+										(void *) node);
+	} else {
+		// Check if the element is already present in the list.
+		lru_node_t *node_p = hash_map_find_val(state->_lru->_lru_hash_map,
+																					 (void *) &node->_blockno);
+		if (node_p != NULL) {
+			// Adjust pointers for the nodes around the requested node.
+			node_p->_prev_node->_next_node = node_p->_next_node;
+			node_p->_next_node->_prev_node = node_p->_prev_node;
+			// Move the existing node to the head of the list.
+			node_p->_next_node = state->_lru->_lru_linked_list->_head;
+			state->_lru->_lru_linked_list->_head->_prev_node = node_p;
+			state->_lru->_lru_linked_list->_head = node_p;
+			state->_lru->_lru_linked_list->_head->_prev_node = NULL;
+		} else {
+			// Add the new node to the head of the list.
+			node->_next_node = state->_lru->_lru_linked_list->_head;
+			state->_lru->_lru_linked_list->_head->_prev_node = node;
+			state->_lru->_lru_linked_list->_head = node;
+			state->_lru->_lru_linked_list->_head->_prev_node = NULL;
+			hash_map_insert(state->_lru->_lru_hash_map,
+										  (void *) &node->_blockno,
+											(void *) node);
+		}
+
+	}
+	state->_lru->_num_elements += 1;
+}
+
+lru_node_t* lru_pop() {
+	if (state->_lru->_num_elements == 0) {
+		return NULL;
+	}
+	lru_node_t *node = state->_lru->_lru_linked_list->_tail;
+	state->_lru->_lru_linked_list->_tail = node->_prev_node;
+	state->_lru->_lru_linked_list->_tail->_next_node = NULL;
+	state->_lru->_num_elements -= 1;
+	hash_map_erase(state->_lru->_lru_hash_map,
+								 (void *) &node->_blockno);
+	return node;
+}
+
 void lru_init(lru_t **lru) {
 	*lru = (lru_t*) malloc(sizeof(lru_t));
 	(*lru)->_lru_linked_list = (lru_linked_list_t*) malloc(
 			sizeof(lru_linked_list_t));
 	(*lru)->_lru_linked_list->_head = NULL;
+	(*lru)->_lru_linked_list->_tail = NULL;
 	(*lru)->_lru_hash_map = hash_map_create_ptr();
 }
 
@@ -119,35 +168,42 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 	return ANTI_CACHE_BLOCK_EVICTION_SUCCESS;
 }
 
+int anti_cache_manager_update_lru() {
+	// Move accessed block to lru from staging queue.
+	lru_node_t *node = lru_staging_queue_pop();
+	int added_blocks_count = 0;
+	while (node != NULL) {
+		lru_push(node);
+		node = lru_staging_queue_pop();
+		++added_blocks_count;
+	}
+	return added_blocks_count;
+}
+
 int anti_cache_manager_evict_blocks() {
 	int evicted_blocks_count = 0;
-	pthread_mutex_lock(&lru_staging_queue_lock);
-	if (state->_staging_queue->_num_elements > ANTI_CACHE_EVICTION_THRESHOLD) {
-		evicted_blocks_count = state->_staging_queue->_num_elements
+	if (state->_lru->_num_elements > ANTI_CACHE_EVICTION_THRESHOLD) {
+		evicted_blocks_count = state->_lru->_num_elements
 				- ANTI_CACHE_EVICTION_THRESHOLD;
-		lru_node_t *current = state->_staging_queue->_queue_head;
+		lru_node_t *node = lru_pop();
 		int i = 0;
-		for (i = 0; i < evicted_blocks_count; ++i) {
-			// Update the head to point the next node after current.
-			state->_staging_queue->_queue_head = current->_next_node;
-			state->_staging_queue->_queue_head->_prev_node = NULL;
+		for (i = 0; i < evicted_blocks_count && node != NULL; ++i) {
 			// Evict and free the current block.
-			anti_cache_manager_evict_to_disk(current->_blockno);
-			free(current);
-			state->_staging_queue->_num_elements--;
-			// Update the current.
-			current = state->_staging_queue->_queue_head;
+			anti_cache_manager_evict_to_disk(node->_blockno);
+			free(node);
+			node = lru_pop();
 		}
 	}
-	pthread_mutex_unlock(&lru_staging_queue_lock);
 	return evicted_blocks_count;
 }
 
 void *anti_cache_manager_main(void *state) {
 	while (1) {
 		usleep(ANTI_CACHE_INVOCATION_INTERVAL);
+		int added_blocks_count = anti_cache_manager_update_lru();
+		printf("Anti cache manager added %d blocks to lru.\n", added_blocks_count);
 		int evicted_blocks_count = anti_cache_manager_evict_blocks();
-		printf("Anti cache manager evicted %d blocks.\n", evicted_blocks_count);
+		printf("Anti cache manager evicted %d blocks to disk.\n", evicted_blocks_count);
 	}
 }
 
@@ -174,7 +230,7 @@ int anti_cache_manager_access(uint64_t blockno) {
 	new_node->_prev_node = NULL;
 	new_node->_next_node = NULL;
 	lru_staging_queue_push(new_node);
-	return 0;
+	return ANTI_CACHE_ACCESS_SUCCESS;
 }
 
 int anti_cache_manager_destroy(void) {

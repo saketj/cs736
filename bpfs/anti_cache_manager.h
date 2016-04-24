@@ -15,6 +15,8 @@
 #define ANTI_CACHE_DESTROY_SUCCESS 0
 #define ANTI_CACHE_DESTROY_FAILURE 1
 
+#define ANTI_CACHE_ACCESS_SUCCESS 0
+#define ANTI_CACHE_ACCESS_FAILURE 1
 
 #define ANTI_CACHE_BLOCK_EVICTION_SUCCESS 0
 #define ANTI_CACHE_BLOCK_EVICTION_FAILURE 1
@@ -42,6 +44,7 @@ struct lru_node_queue {
 
 struct lru_linked_list {
   lru_node_t *_head;
+  lru_node_t *_tail;
 };
 
 struct lru {
