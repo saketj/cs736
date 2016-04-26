@@ -726,6 +726,8 @@ char* get_block(uint64_t blockno) {
 		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
 		//assert(close(fd) == 0);
 
+		int found = 0;
+
 		uint64_t new_block = alloc_block();
 		char * new_block_ptr = bpram + (new_block - 1) * BPFS_BLOCK_SIZE;
 		memcpy(new_block_ptr, buf, 4096);
@@ -734,13 +736,21 @@ char* get_block(uint64_t blockno) {
 		int j = 0;
 		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
 			if (indir->addr[j] == blockno) {
-				printf("Correct mapping %ld \t %ld\t %ld\n", current_indir_pointer,
-						blockno, new_block);
+				printf("Correct mapping %ld \t %ld\t %ld\n",
+						current_indir_pointer, blockno, new_block);
 				indir->addr[j] = new_block;
+				found = 1;
 				break;
 			}
 		}
-		return new_block_ptr;
+		if (found) {
+			anti_cache_manager_access(new_block);
+			return new_block_ptr;
+		} else {
+			assert(0);
+			return NULL;
+
+		}
 	}
 	return bpram + (blockno - 1) * BPFS_BLOCK_SIZE;
 }
@@ -3335,8 +3345,13 @@ static void fuse_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
 static int callback_read(uint64_t blockoff, char *block, unsigned off,
 		unsigned size, unsigned valid, uint64_t crawl_start, enum commit commit,
 		void *iov_void, uint64_t *new_blockno) {
-	printf("%ld\n", *new_blockno);
-	anti_cache_manager_access(*new_blockno);
+
+	struct bpfs_super *super = get_super();
+	if (*new_blockno <= super->nblocks) {
+		printf("\nAccessing: \t %ld\n", *new_blockno);
+		anti_cache_manager_access(*new_blockno);
+	}
+
 	struct iovec *iov = iov_void;
 	iov += blockoff - crawl_start / BPFS_BLOCK_SIZE;
 	iov->iov_base = block + off;
