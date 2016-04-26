@@ -179,7 +179,7 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 			if (indir->addr[j] == block_num) {
 				indir->addr[j] = blockno;
 				printf("%ldMoving to disk in %ld \n", block_num, blockno);
-				//unalloc_block(block_num);
+				free_block(block_num);
 				break;
 			}
 		}
@@ -208,13 +208,13 @@ int anti_cache_manager_evict_blocks() {
 		int i = 0;
 		for (i = 0; i < evicted_blocks_count && node != NULL; ++i) {
 			// Evict and free the current block.
-			printf ("Before anti_cache_manager_evict_to_disk \n");
+			printf("Before anti_cache_manager_evict_to_disk \n");
 			anti_cache_manager_evict_to_disk(node->_blockno);
-			printf ("After anti_cache_manager_evict_to_disk \n");
+			printf("After anti_cache_manager_evict_to_disk \n");
 			free(node);
-			printf ("Before lru_pop \n");
+			printf("Before lru_pop \n");
 			node = lru_pop();
-			printf ("After lru_pop \n");
+			printf("After lru_pop \n");
 		}
 	}
 	return evicted_blocks_count;
@@ -250,6 +250,7 @@ int anti_cache_manager_init(void) {
 }
 
 int anti_cache_manager_access(uint64_t blockno) {
+	printf("\nanti_cache_manager_access:\t%ld\n", blockno);
 	lru_node_t *new_node = (lru_node_t *) malloc(sizeof(lru_node_t));
 	new_node->_blockno = blockno;
 	new_node->_prev_node = NULL;

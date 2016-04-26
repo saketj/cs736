@@ -20,7 +20,7 @@
 #define ANTI_CACHE_BLOCK_EVICTION_FAILURE 1
 
 #define ANTI_CACHE_INVOCATION_INTERVAL 10000000  // in microseconds.
-#define ANTI_CACHE_EVICTION_THRESHOLD 10
+#define ANTI_CACHE_EVICTION_THRESHOLD 30
 
 typedef struct lru_node lru_node_t;
 typedef struct lru_node_queue lru_node_queue_t;
