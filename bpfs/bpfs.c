@@ -603,7 +603,7 @@ static void set_block(uint64_t blockno) {
 	bitmap_set(&block_alloc.bitmap, blockno - 1);
 }
 
-static void free_block(uint64_t blockno) {
+void free_block(uint64_t blockno) {
 	DBprintf("%s() = %" PRIu64 "\n", __FUNCTION__, blockno);
 	assert(blockno != BPFS_BLOCKNO_INVALID);
 #if INDIRECT_COW
@@ -3433,6 +3433,8 @@ static int callback_write(uint64_t blockoff, char *block, unsigned off,
 		memcpy(block + off, buf + buf_offset, size);
 	if (SCSP_OPT_APPEND && off >= valid)
 		indirect_cow_block_direct(*new_blockno, off, size);
+
+	anti_cache_manager_access(*new_blockno);
 
 	return 0;
 }
