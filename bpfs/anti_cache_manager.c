@@ -169,7 +169,7 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 			if (indir->addr[j] == block_num) {
 				indir->addr[j] = blockno;
 				printf("%ldMoving to disk in %ld \n", block_num, blockno);
-				unalloc_block(block_num);
+				//unalloc_block(block_num);
 				break;
 			}
 		}
