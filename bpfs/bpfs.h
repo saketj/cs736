@@ -19,7 +19,7 @@
 //Disk Manager
 
 #define DISK_BLOCK_SIZE 4096
-#define DISK_SIZE 81920
+#define DISK_SIZE 8192000
 
 // Allow in-place append writes
 #define SCSP_OPT_APPEND_ALLOW 1

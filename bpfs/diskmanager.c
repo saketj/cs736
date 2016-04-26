@@ -100,7 +100,7 @@ uint64_t offset = (blockNumber)*diskManagerBlockSize;
 assert(pwrite(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
 assert(close(fd)==0);
 printf("Completed writing to disk\n");
-return 1;
+return blockNumber;
 }
 
 
