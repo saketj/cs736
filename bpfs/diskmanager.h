@@ -22,6 +22,8 @@ char *diskManagerFileName;
 
 uint64_t fileSize;
 
+#define READ_PREFETCH_BLOCK_COUNT 10
+
 uint64_t totalBlockCount;
 
 static uint64_t currentDiskBlockNumber = 0;
