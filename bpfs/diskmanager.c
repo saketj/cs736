@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
+#include <unordered_map>
 
 // Not open and close file every time. This will cause the file to flush
 // Have a way of moving multiple blocks to and fro disk
@@ -26,14 +26,28 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 }
 
 //TODO (Siddharth) - Assert statements everywhere to verify input, size of buffer.etc
-int readBlock(uint64_t blockNumber, char *buf) {
+int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
   
   if(buf==NULL) return -1; 
+
+  if(prefetched_blocks.find(blockNumber)!=prefetched_blocks.end())
+  {
+  return prefetched_blocks[blockNumber];
+  }
+  // if block has not been pre
 	printf("Inside Disk Manager readBlock for blockNumber: %ld\n", blockNumber);
 	int fd = open(diskManagerFileName, O_RDWR);
   char *tempbuf = (char *)malloc(READ_PREFETCH_BLOCK_COUNT*sizeof(char));
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
 	assert(pread(fd, tempbuf, READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize, offset)== diskManagerBlockSize);
+  int i=0;
+
+  for(;i<READ_PREFETCH_BLOCK_COUNT;i++)
+  {
+    prefetched_blocks[blockNumber]=(char *)(tempbuf+i);
+  } 
+
+
   memcpy(buf,tempbuf,diskManagerBlockSize);
 	assert(close(fd) == 0);
 	printf("Completed reading block number %ld and contents are %s\n",
@@ -41,6 +55,20 @@ int readBlock(uint64_t blockNumber, char *buf) {
 	return 1;
 
 }
+
+
+int readBlock(uint64_t blockNumber, char *buf){
+
+printf("Inside Disk Manager readBlock for blockNumber: %ld\n",blockNumber);
+int fd = open(diskManagerFileName, O_RDWR);
+uint64_t offset = (blockNumber)*diskManagerBlockSize;
+assert(pread(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
+assert(close(fd)==0);
+printf("Completed reading block number %ld and contents are %s\n",blockNumber,bu
+return 1;
+        
+}
+
 
 
 

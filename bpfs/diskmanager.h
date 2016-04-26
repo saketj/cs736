@@ -24,6 +24,7 @@ uint64_t fileSize;
 
 #define READ_PREFETCH_BLOCK_COUNT 10
 
+unordered_map<uint64_t,char *> prefetched_blocks
 uint64_t totalBlockCount;
 
 static uint64_t currentDiskBlockNumber = 0;
