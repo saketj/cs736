@@ -19,7 +19,7 @@
 //Disk Manager
 
 #define DISK_BLOCK_SIZE 4096
-#define DISK_SIZE 81920
+#define DISK_SIZE 8192000
 
 // Allow in-place append writes
 #define SCSP_OPT_APPEND_ALLOW 1
@@ -78,9 +78,8 @@ uint64_t get_super_blockno(void);
 #endif
 
 uint64_t* indir_mapping;
-
 static uint64_t candidate_blocks[] = {10,14,18,22,26,30,34,38,42,46,51,55,57,61,65};
-
+uint64_t current_indir_pointer;
 char* get_block(uint64_t blockno);
 static __inline
 unsigned block_offset(const void *x) __attribute__((always_inline));

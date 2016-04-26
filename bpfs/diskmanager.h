@@ -1,5 +1,4 @@
 
-
 #ifndef DISK_MANAGER_H
 #define DISK_MANAGER_H
 
@@ -16,8 +15,8 @@
 int readBlock(uint64_t blockNumber, char *buf);
 int freeBlock(uint64_t blockNumber);
 int writeBlock(char *buf);
-void initializeDiskManager(char *fileName, uint64_t fileSize, uint64_t blockSize);
-
+void initializeDiskManager(char *fileName, uint64_t fileSize,
+		uint64_t blockSize);
 
 char *diskManagerFileName;
 
@@ -25,20 +24,17 @@ uint64_t fileSize;
 
 uint64_t totalBlockCount;
 
-static uint64_t currentDiskBlockNumber=0;
+static uint64_t currentDiskBlockNumber = 0;
 
 uint64_t diskManagerBlockSize;
 
-struct freeListNode
-{
+struct freeListNode {
 	uint64_t blockNumber;
 	struct freeListNode *next;
 };
 
-static struct freeListNode *freeList=NULL;
+static struct freeListNode *freeList = NULL;
 
 #endif
 //Fragmentation Avoidance Part
-
-
 

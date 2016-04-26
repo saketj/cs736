@@ -29,32 +29,31 @@ typedef struct lru_linked_list lru_linked_list_t;
 typedef struct anti_cache_manager_state anti_cache_manager_state_t;
 
 struct lru_node {
-  uint64_t _blockno;
-  lru_node_t *_prev_node;
-  lru_node_t *_next_node;
+	uint64_t _blockno;
+	lru_node_t *_prev_node;
+	lru_node_t *_next_node;
 };
 
 struct lru_node_queue {
-  uint64_t _num_elements;
-  lru_node_t *_queue_head;
-  lru_node_t *_queue_tail;
+	uint64_t _num_elements;
+	lru_node_t *_queue_head;
+	lru_node_t *_queue_tail;
 };
 
 struct lru_linked_list {
-  lru_node_t *_head;
-  lru_node_t *_tail;
+	lru_node_t *_head;
+	lru_node_t *_tail;
 };
 
 struct lru {
-  uint64_t _num_elements;
-  lru_linked_list_t *_lru_linked_list;
-  void *_lru_hash_map;
+	uint64_t _num_elements;
+	lru_linked_list_t *_lru_linked_list;
+	void *_lru_hash_map;
 };
 
-
 struct anti_cache_manager_state {
-  lru_t *_lru;
-  lru_node_queue_t *_staging_queue;
+	lru_t *_lru;
+	lru_node_queue_t *_staging_queue;
 };
 
 int anti_cache_manager_init(void);
