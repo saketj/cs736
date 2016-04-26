@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <unordered_map>
+#include "lru_hash_map_interface.h"
 
 // Not open and close file every time. This will cause the file to flush
 // Have a way of moving multiple blocks to and fro disk
@@ -21,34 +21,23 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 	fileSize = size;
 	totalBlockCount = fileSize / blockSize;
 	diskManagerBlockSize = blockSize;
+	//void * hashmap = lru_hash_map_init();
 	printf("Completed Initializing Disk Manager\n");
 
 }
+
 
 //TODO (Siddharth) - Assert statements everywhere to verify input, size of buffer.etc
 int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
   
   if(buf==NULL) return -1; 
-
-  if(prefetched_blocks.find(blockNumber)!=prefetched_blocks.end())
-  {
-  return prefetched_blocks[blockNumber];
-  }
-  // if block has not been pre
+  // if block has not been prefetched
 	printf("Inside Disk Manager readBlock for blockNumber: %ld\n", blockNumber);
 	int fd = open(diskManagerFileName, O_RDWR);
-  char *tempbuf = (char *)malloc(READ_PREFETCH_BLOCK_COUNT*sizeof(char));
+    char *tempbuf = (char *)malloc(READ_PREFETCH_BLOCK_COUNT*sizeof(diskManagerBlockSize));
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
 	assert(pread(fd, tempbuf, READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize, offset)== diskManagerBlockSize);
-  int i=0;
-
-  for(;i<READ_PREFETCH_BLOCK_COUNT;i++)
-  {
-    prefetched_blocks[blockNumber]=(char *)(tempbuf+i);
-  } 
-
-
-  memcpy(buf,tempbuf,diskManagerBlockSize);
+    memcpy(buf,tempbuf,diskManagerBlockSize);
 	assert(close(fd) == 0);
 	printf("Completed reading block number %ld and contents are %s\n",
 			blockNumber, buf);
@@ -64,7 +53,7 @@ int fd = open(diskManagerFileName, O_RDWR);
 uint64_t offset = (blockNumber)*diskManagerBlockSize;
 assert(pread(fd, buf, diskManagerBlockSize, offset)==diskManagerBlockSize);
 assert(close(fd)==0);
-printf("Completed reading block number %ld and contents are %s\n",blockNumber,bu
+printf("Completed reading block number %ld and contents are %s\n",blockNumber,buf);
 return 1;
         
 }
@@ -86,7 +75,7 @@ int *writeBlocksInBulk(char **buf, uint64_t numberOfBlocks)
   if (blockNumber == -1) {
     return NULL; //failure to write block. couldnt find free block
   }
-  printf("New block number from findfreeblock for block %ld: %ld\n", i,blockNumber);
+  printf("New block number from findfreeblock for block %d: %ld\n", i,blockNumber);
   uint64_t offset = (blockNumber) * diskManagerBlockSize;
   char *tempbuf=*(buf+i);
   assert(pwrite(fd, tempbuf, diskManagerBlockSize, offset)== diskManagerBlockSize);
