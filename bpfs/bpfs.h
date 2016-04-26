@@ -84,6 +84,7 @@ char* get_block(uint64_t blockno);
 static __inline
 unsigned block_offset(const void *x) __attribute__((always_inline));
 void unfree_block(uint64_t blockno);
+void free_block(uint64_t blockno);
 void unalloc_block(uint64_t blockno);
 
 struct bpfs_tree_root* get_inode_root(void);

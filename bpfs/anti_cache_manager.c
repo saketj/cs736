@@ -79,7 +79,6 @@ void lru_push(lru_node_t *node) {
 		lru_node_t *node_p = (lru_node_t *) lru_hash_map_find(
 				state->_lru->_lru_hash_map, node->_blockno);
 		if (node_p != NULL) {
-			assert(node_p->_blockno < 1000);
 			if (node_p == state->_lru->_lru_linked_list->_head) {
 				// The accessed node is already at the head of the list, do nothing.
 				return;
@@ -124,7 +123,6 @@ lru_node_t* lru_pop() {
 		state->_lru->_lru_linked_list->_tail = NULL;
 		state->_lru->_lru_linked_list->_head = NULL;
 		state->_lru->_num_elements = 0;
-		assert(node->_blockno < 1000);
 		return node;
 	}
 	// When there are more than one elements to pop.
@@ -133,7 +131,6 @@ lru_node_t* lru_pop() {
 	state->_lru->_lru_linked_list->_tail->_next_node = NULL;
 	lru_hash_map_erase(state->_lru->_lru_hash_map, node->_blockno);
 	state->_lru->_num_elements -= 1;
-	assert(node->_blockno < 1000);
 	return node;
 }
 
@@ -202,7 +199,7 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 			if (indir->addr[j] == block_num) {
 				indir->addr[j] = blockno;
 				printf("%ldMoving to disk in %ld \n", block_num, blockno);
-				//unalloc_block(block_num);
+				free_block(block_num);
 				break;
 			}
 		}
@@ -215,7 +212,6 @@ int anti_cache_manager_update_lru() {
 	lru_node_t *node = lru_staging_queue_pop();
 	int added_blocks_count = 0;
 	while (node != NULL) {
-		assert(node->_blockno < 1000);
 		lru_push(node);
 		node = lru_staging_queue_pop();
 		++added_blocks_count;
@@ -232,7 +228,6 @@ int anti_cache_manager_evict_blocks() {
 		int i = 0;
 		for (i = 0; i < evicted_blocks_count && node != NULL; ++i) {
 			// Evict and free the current block.
-			assert(node->_blockno < 1000);
 			anti_cache_manager_evict_to_disk(node->_blockno);
 			free(node);
 			node = lru_pop();
@@ -274,7 +269,6 @@ int anti_cache_manager_init(void) {
 
 int anti_cache_manager_access(uint64_t blockno) {
 	assert((blockno & (1<<63)) == 0);
-	assert((blockno < 1000));
 	lru_node_t *new_node = (lru_node_t *) malloc(sizeof(lru_node_t));
 	new_node->_blockno = blockno;
 	new_node->_prev_node = NULL;
