@@ -106,9 +106,19 @@ void lru_push(lru_node_t *node) {
 }
 
 lru_node_t* lru_pop() {
+	// When there are no elements to pop.
 	if (state->_lru->_num_elements == 0) {
 		return NULL;
 	}
+	// When there is only one element to pop.
+	if (state->_lru->_num_elements == 1) {
+		lru_node_t *node = state->_lru->_lru_linked_list->_tail;
+		state->_lru->_lru_linked_list->_tail = NULL;
+		state->_lru->_lru_linked_list->_head = NULL;
+		state->_lru->_num_elements = 0;
+		return node;
+	}
+	// When there are more than one elements to pop.
 	lru_node_t *node = state->_lru->_lru_linked_list->_tail;
 	state->_lru->_lru_linked_list->_tail = node->_prev_node;
 	state->_lru->_lru_linked_list->_tail->_next_node = NULL;
