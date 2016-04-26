@@ -72,14 +72,12 @@
 #define BPFS_TREE_LOG_ROOT_MAX_ADDR (sizeof(uint64_t) * 8 - BPFS_TREE_LOG_MAX_HEIGHT)
 #define BPFS_TREE_ROOT_MAX_ADDR ((((uint64_t) 1) << BPFS_TREE_LOG_ROOT_MAX_ADDR) - 1)
 
-struct height_addr
-{
+struct height_addr {
 	uint64_t height : BPFS_TREE_LOG_MAX_HEIGHT; // #levels of indir blocks
-	uint64_t addr   : BPFS_TREE_LOG_ROOT_MAX_ADDR;
+	uint64_t addr : BPFS_TREE_LOG_ROOT_MAX_ADDR;
 };
 
-struct bpfs_tree_root
-{
+struct bpfs_tree_root {
 	struct height_addr ha; // valid iff !!nbytes
 	uint64_t nbytes;
 };
@@ -88,11 +86,10 @@ struct bpfs_tree_root
 #define BPFS_COMMIT_SP 0
 #define BPFS_COMMIT_SCSP 1
 
-struct bpfs_super
-{
+struct bpfs_super {
 	uint32_t magic;
 	uint32_t version;
-	uint8_t  uuid[16];
+	uint8_t uuid[16];
 	uint64_t nblocks;
 	uint64_t inode_root_addr; // block number containing the inode tree root
 	uint64_t inode_root_addr_2; // only used with SP; for commit consistency
@@ -101,25 +98,20 @@ struct bpfs_super
 	uint8_t pad[4046]; // pad to full block
 };
 
-
 #define BPFS_BLOCKNOS_PER_INDIR (BPFS_BLOCK_SIZE / sizeof(uint64_t))
 
-struct bpfs_indir_block
-{
+struct bpfs_indir_block {
 	// TODO: would 32b addresses help significantly?
 	uint64_t addr[BPFS_BLOCKNOS_PER_INDIR];
 };
 
-
-struct bpfs_time
-{
+struct bpfs_time {
 	uint32_t sec;
 //	uint32_t ns;
 };
 
 // TODO: could shrink bpfs_inode from 128 to 64 bytes
-struct bpfs_inode
-{
+struct bpfs_inode {
 	uint64_t generation;
 	uint32_t uid;
 	uint32_t gid;
@@ -135,9 +127,7 @@ struct bpfs_inode
 
 #define BPFS_INODES_PER_BLOCK (BPFS_BLOCK_SIZE / sizeof(struct bpfs_inode))
 
-
-struct bpfs_dirent
-{
+struct bpfs_dirent {
 	uint64_t ino;
 	uint16_t rec_len;
 	// TODO: Is 'file_type' helpful?
@@ -146,7 +136,8 @@ struct bpfs_dirent
 	uint8_t file_type;
 	uint8_t name_len;
 	char name[];
-} __attribute__((packed)); // pack rather than manually pad for char name[]
+}__attribute__((packed));
+// pack rather than manually pad for char name[]
 
 #define BPFS_DIRENT_ALIGN 8
 #define BPFS_DIRENT_MAX_NAME_LEN \
@@ -156,11 +147,9 @@ struct bpfs_dirent
 	ROUNDUP64(sizeof(struct bpfs_dirent) + (name_len), BPFS_DIRENT_ALIGN)
 #define BPFS_DIRENT_MIN_LEN BPFS_DIRENT_LEN(0)
 
-
 // static_assert() must be used in a function, so declare one solely for this
 // purpose. It returns its own address to avoid an unused function warning.
-static inline void* __bpfs_structs_static_asserts(void)
-{
+static inline void* __bpfs_structs_static_asserts(void) {
 	static_assert(sizeof(struct height_addr) == 8); // need to set atomically
 	static_assert(!(sizeof(struct bpfs_tree_root) % 8));
 	static_assert(sizeof(struct bpfs_super) == BPFS_BLOCK_SIZE);

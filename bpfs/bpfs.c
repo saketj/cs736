@@ -714,20 +714,34 @@ char* get_block(uint64_t blockno) {
 		uint64_t blockno_bt = blockno ^ no;
 		struct stat st;
 		//TODO (Siddharth Suresh) - Disk Manager
-	
+
 		printf("%ld\n", blockno_bt);
 		assert(stat(diskManagerFileName, &st) == 0);
 		//assert((blockno_bt + 1) * 4096 == st.st_size);
-		
+
 		//int fd = open(filename, O_RDONLY);
 		//assert(fd > 0);
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlock(blockno_bt,buf)==1);
+		assert(readBlock(blockno_bt, buf) == 1);
 		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
 		//assert(close(fd) == 0);
-		return buf;
-	}
 
+		uint64_t new_block = alloc_block();
+		char * new_block_ptr = bpram + (new_block - 1) * BPFS_BLOCK_SIZE;
+		memcpy(new_block_ptr, buf, 4096);
+		struct bpfs_indir_block *indir = (struct bpfs_indir_block*) get_block(
+				current_indir_pointer);
+		int j = 0;
+		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
+			if (indir->addr[j] == blockno) {
+				printf("Correct mapping %ld \t %ld\t %ld\n", current_indir_pointer,
+						blockno, new_block);
+				indir->addr[j] = new_block;
+				break;
+			}
+		}
+		return new_block_ptr;
+	}
 	return bpram + (blockno - 1) * BPFS_BLOCK_SIZE;
 }
 
@@ -3202,8 +3216,8 @@ static void fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t max_size,
 		stbuf.st_mode = S_IFDIR;
 		off++;
 
-		fuse_dirent_size = fuse_add_direntry(req, NULL, 0, name[name_i], NULL,
-				0);
+		fuse_dirent_size = fuse_add_direntry(req, NULL, 0, name[name_i],
+		NULL, 0);
 		// should be true:
 		xassert(params.total_size + fuse_dirent_size <= params.max_size);
 		params.total_size += fuse_dirent_size;
@@ -3640,11 +3654,11 @@ int main(int argc, char **argv) {
 	int fargc;
 	char **fargv;
 	int r = -1;
-    
-	initializeDiskManager("/tmp/1",DISK_SIZE,DISK_BLOCK_SIZE);
+
+	initializeDiskManager("/tmp/1", DISK_SIZE, DISK_BLOCK_SIZE);
 
 	xassert(!hash_map_init());
-    //TODO (Siddharth Suresh) - Disk Manager
+	//TODO (Siddharth Suresh) - Disk Manager
 	if (argc < 3) {
 		fprintf(stderr, "%s: <-f FILE|-s SIZE> [FUSE...]\n", argv[0]);
 		exit(1);
@@ -3683,11 +3697,10 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "BPRAM is smaller than the file system\n");
 		return -1;
 	}
+
+	current_indir_pointer = 0;
 	indir_mapping = (uint64_t*) calloc(bpfs_super->nblocks, sizeof(uint64_t));
 
-	char *filename = "/tmp/1";
-	int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT,
-			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 	if (!indir_mapping) {
 		fprintf(stderr, "Unable to allocate memory\n");
 		return -1;
@@ -3699,6 +3712,13 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Unable to recover BPFS superblock\n");
 		return -1;
 	}
+
+	char *filename = "/tmp/1";
+	unlink(filename);
+	int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT,
+	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	assert(fd > 0);
+	assert(close(fd) == 0);
 
 #if COMMIT_MODE == MODE_SP
 	bpfs_super[1].commit_mode = bpfs_super->commit_mode = BPFS_COMMIT_SP;

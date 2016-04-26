@@ -40,6 +40,11 @@ static int crawl_leaf(uint64_t prev_blockno, uint64_t blockoff, unsigned off,
 		struct bpfs_super *super = get_super();
 		if (child_blockno <= super->nblocks)
 			indir_mapping[child_blockno] = indir_blockno;
+		uint64_t no = 1;
+		no = no << 63;
+		if (child_blockno & no) {
+			current_indir_pointer = indir_blockno;
+		}
 	}
 
 	if (callback) {
