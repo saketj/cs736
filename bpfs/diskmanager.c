@@ -47,22 +47,34 @@ int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 			blockNumber);
 
 	int fd = open(diskManagerFileName, O_RDWR);
+
 	char *tempbuf = (char *) malloc(
-			READ_PREFETCH_BLOCK_COUNT * diskManagerBlockSize);
+	READ_PREFETCH_BLOCK_COUNT * diskManagerBlockSize);
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
+
+	uint64_t maxPrefetch = READ_PREFETCH_BLOCK_COUNT;
+	if ((currentDiskBlockNumber - 1)
+			< blockNumber + READ_PREFETCH_BLOCK_COUNT - 1) {
+		maxPrefetch = currentDiskBlockNumber - blockNumber;
+	}
+
+	printf("maxprefetch: %ld currentDiskBlockNumber:%ld blockNumber:%ld\n",
+			maxPrefetch, currentDiskBlockNumber, blockNumber);
 	assert(
-			pread(fd, tempbuf, READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize, offset)== READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize);
+			pread(fd, tempbuf, maxPrefetch * diskManagerBlockSize, offset)
+					== maxPrefetch * diskManagerBlockSize);
 	memcpy(buf, tempbuf, diskManagerBlockSize);
+	buf[diskManagerBlockSize] = '\0';
 	printf("copied data into buffer inside readBlocksWithPrefetch: %ld\n",
 			blockNumber);
 	//TODO (Siddharth) - What if after prefetching block is updated.
 	int i = 0;
 
-	/*for(;i<READ_PREFETCH_BLOCK_COUNT;i++)
-	 {
-	 lru_hash_map_insert(prefetch_hash_map,blockNumber+i,
-	 (void *) (tempbuf+i*diskManagerBlockSize));
-	 }*/
+	for (; i < maxPrefetch; i++) {
+		printf("Inserting the %d block into the hash map", i);
+		lru_hash_map_insert(prefetch_hash_map, blockNumber + i,
+				(void *) (tempbuf + i * diskManagerBlockSize));
+	}
 
 	assert(close(fd) == 0);
 	printf("Completed reading block number %ld and contents are %s\n",
@@ -151,7 +163,7 @@ int freeBlock(uint64_t blockNumber) {
 	char block[diskManagerBlockSize];
 	int i;
 	for (i = 0; i < diskManagerBlockSize; i++)
-		block[i] = '\0';
+		block[i] = "";
 
 	int fd = open(diskManagerFileName, O_RDWR);
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
