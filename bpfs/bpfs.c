@@ -722,7 +722,7 @@ char* get_block(uint64_t blockno) {
 		//int fd = open(filename, O_RDONLY);
 		//assert(fd > 0);
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlock(blockno_bt, buf) == 1);
+		assert(readBlocksWithPrefetch(blockno_bt, buf) == 1);
 		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
 		//assert(close(fd) == 0);
 

@@ -1,5 +1,5 @@
 #include "diskmanager.h"
-
+#include "lru_hash_map_interface.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -22,7 +22,7 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 	fileSize = size;
 	totalBlockCount = fileSize / blockSize;
 	diskManagerBlockSize = blockSize;
-	//void * hashmap = lru_hash_map_init();
+	prefetch_hash_map = lru_hash_map_init();
 	printf("Completed Initializing Disk Manager\n");
 
 }
@@ -32,14 +32,35 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 
 int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
   
+  printf("Inside Disk Manager readBlockswithprefetch for blockNumber: %ld\n", blockNumber);
   if(buf==NULL) return -1; 
   // if block has not been prefetched
-	printf("Inside Disk Manager readBlock for blockNumber: %ld\n", blockNumber);
+  char *block;
+  if((block = (char *) lru_hash_map_find(prefetch_hash_map, blockNumber)))
+  {
+    if(block != NULL)
+    {
+     	memcpy(buf,block,diskManagerBlockSize);
+        return 1; 
+    }   
+  }
+  	printf("After checking prefetched info inside readblockswithprefetch: %ld\n", blockNumber);
+	
 	int fd = open(diskManagerFileName, O_RDWR);
     char *tempbuf = (char *)malloc(READ_PREFETCH_BLOCK_COUNT*sizeof(diskManagerBlockSize));
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
-	assert(pread(fd, tempbuf, READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize, offset)== diskManagerBlockSize);
+	assert(pread(fd, tempbuf, READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize, offset)== READ_PREFETCH_BLOCK_COUNT*diskManagerBlockSize);
     memcpy(buf,tempbuf,diskManagerBlockSize);
+    printf("copied data into buffer inside readBlocksWithPrefetch: %ld\n", blockNumber);
+    //TODO (Siddharth) - What if after prefetching block is updated. 
+    int i=0;
+    
+    /*for(;i<READ_PREFETCH_BLOCK_COUNT;i++)
+    {
+       lru_hash_map_insert(prefetch_hash_map,blockNumber+i,
+				(void *) (tempbuf+i*diskManagerBlockSize));
+    }*/
+    
 	assert(close(fd) == 0);
 	printf("Completed reading block number %ld and contents are %s\n",
 			blockNumber, buf);
@@ -64,16 +85,16 @@ return 1;
 
 
 
-int *writeBlocksInBulk(char **buf, uint64_t numberOfBlocks)
+uint64_t* writeBlocksInBulk(char **buf, uint64_t numberOfBlocks)
 {
 
-  int *returnBlockNumbers=(int *)malloc(sizeof(int)*numberOfBlocks);
+  uint64_t *returnBlockNumbers=(uint64_t *)malloc(sizeof(uint64_t)*numberOfBlocks);
   printf("Inside Disk Manager writeBlocksInBulk\n");
   int i=0;
   int fd = open(diskManagerFileName, O_RDWR);
   for(;i<numberOfBlocks;i++)
   {
-  printf("Calling findfreeblock for block: %ld\n",i);
+  printf("Calling findfreeblock for block: %d\n",i);
   uint64_t blockNumber = findFreeBlock();
   if (blockNumber == -1) {
     return NULL; //failure to write block. couldnt find free block
@@ -92,7 +113,7 @@ int *writeBlocksInBulk(char **buf, uint64_t numberOfBlocks)
 }
 
 
-void addBlockToFreeList(uint blockNumber) {
+void addBlockToFreeList(uint64_t blockNumber) {
 	printf("Inside addBlockToFreeList: %ld\n", blockNumber);
 	struct freeListNode *temp = (struct freeListNode *) malloc(
 			sizeof(struct freeListNode));
@@ -128,13 +149,23 @@ int freeBlock(uint64_t blockNumber) {
 	char block[diskManagerBlockSize];
 	int i;
 	for (i = 0; i < diskManagerBlockSize; i++)
-		block[i] = "";
+		block[i] = '\0';
 
 	int fd = open(diskManagerFileName, O_RDWR);
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
 	assert(
 			pwrite(fd, block, diskManagerBlockSize, offset)
 					== diskManagerBlockSize);
+	//Now modify the prefetch_hash_map also
+	char *blockAddress;
+	if((blockAddress = (char *) lru_hash_map_find(prefetch_hash_map, blockNumber)))
+  {
+    if(blockAddress != NULL)
+    {
+        lru_hash_map_erase(prefetch_hash_map,blockNumber);
+        free(blockAddress);
+    }   
+  }
 	assert(close(fd) == 0);
 	printf("Completed freeing block on disk\n");
 	addBlockToFreeList(blockNumber);
@@ -174,7 +205,7 @@ int findFreeBlock() {
 
 		blockNumber = freeListBlockNumber;
 	} else {
-		printf("current block number: %d\n", currentDiskBlockNumber);
+		printf("current block number: %ld\n", currentDiskBlockNumber);
 		blockNumber = currentDiskBlockNumber;
 		currentDiskBlockNumber++;
 	}
