@@ -604,6 +604,10 @@ static void set_block(uint64_t blockno) {
 }
 
 void free_block(uint64_t blockno) {
+	uint64_t no = 1;
+	no = no << 63;
+	if (blockno & no)
+		return;
 	DBprintf("%s() = %" PRIu64 "\n", __FUNCTION__, blockno);
 	assert(blockno != BPFS_BLOCKNO_INVALID);
 #if INDIRECT_COW
@@ -722,7 +726,7 @@ char* get_block(uint64_t blockno) {
 		//int fd = open(filename, O_RDONLY);
 		//assert(fd > 0);
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlocksWithPrefetch(blockno_bt, buf) == 1);
+		assert(readBlock(blockno_bt, buf) == 1);
 		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
 		//assert(close(fd) == 0);
 
