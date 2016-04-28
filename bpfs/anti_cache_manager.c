@@ -22,6 +22,7 @@
 
 static pthread_t anti_cache_manager_thread;
 static pthread_mutex_t lru_staging_queue_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t lru_lock = PTHREAD_MUTEX_INITIALIZER;
 static anti_cache_manager_state_t *state;
 
 void lru_staging_queue_push(lru_node_t *node) {
@@ -41,8 +42,8 @@ void lru_staging_queue_push(lru_node_t *node) {
 }
 
 lru_node_t* lru_staging_queue_pop() {
-	lru_node_t *node = NULL;
 	pthread_mutex_lock(&lru_staging_queue_lock);
+	lru_node_t *node = NULL;
 	if (state->_staging_queue->_queue_head == NULL) {
 		// Queue is empty.
 	} else if (state->_staging_queue->_queue_head
@@ -65,6 +66,7 @@ lru_node_t* lru_staging_queue_pop() {
 }
 
 void lru_push(lru_node_t *node) {
+	pthread_mutex_lock(&lru_lock);
 	// Remove the prev and next pointers for the node.
 	node->_prev_node = NULL;
 	node->_next_node = NULL;
@@ -81,7 +83,6 @@ void lru_push(lru_node_t *node) {
 		if (node_p != NULL) {
 			if (node_p == state->_lru->_lru_linked_list->_head) {
 				// The accessed node is already at the head of the list, do nothing.
-				return;
 			} else {
 				assert(node_p->_prev_node != NULL); // Make sure node_p is not head.
 				// Adjust pointers for the nodes around the requested node.
@@ -110,27 +111,30 @@ void lru_push(lru_node_t *node) {
 			state->_lru->_num_elements += 1;
 		}
 	}
+	pthread_mutex_unlock(&lru_lock);
 }
 
 lru_node_t* lru_pop() {
-	// When there are no elements to pop.
+	pthread_mutex_lock(&lru_lock);
+	lru_node_t *node;
 	if (state->_lru->_num_elements == 0) {
-		return NULL;
-	}
-	// When there is only one element to pop.
-	if (state->_lru->_num_elements == 1) {
-		lru_node_t *node = state->_lru->_lru_linked_list->_tail;
+		// When there are no elements to pop.
+		node = NULL;  // do nothing.
+	} else if (state->_lru->_num_elements == 1) {
+		// When there is only one element to pop.
+		node = state->_lru->_lru_linked_list->_tail;
 		state->_lru->_lru_linked_list->_tail = NULL;
 		state->_lru->_lru_linked_list->_head = NULL;
 		state->_lru->_num_elements = 0;
-		return node;
+	} else {
+		// When there are more than one elements to pop.
+		node = state->_lru->_lru_linked_list->_tail;
+		state->_lru->_lru_linked_list->_tail = node->_prev_node;
+		state->_lru->_lru_linked_list->_tail->_next_node = NULL;
+		lru_hash_map_erase(state->_lru->_lru_hash_map, node->_blockno);
+		state->_lru->_num_elements -= 1;
 	}
-	// When there are more than one elements to pop.
-	lru_node_t *node = state->_lru->_lru_linked_list->_tail;
-	state->_lru->_lru_linked_list->_tail = node->_prev_node;
-	state->_lru->_lru_linked_list->_tail->_next_node = NULL;
-	lru_hash_map_erase(state->_lru->_lru_hash_map, node->_blockno);
-	state->_lru->_num_elements -= 1;
+	pthread_mutex_unlock(&lru_lock);
 	return node;
 }
 
@@ -163,26 +167,44 @@ void lru_staging_queue_init(lru_node_queue_t **staging_queue) {
 	(*staging_queue)->_queue_tail = NULL;
 }
 
+void anti_cache_manager_delete_lru_entries(uint64_t* block_num_arr, uint64_t size) {
+	pthread_mutex_lock(&lru_lock);
+	uint64_t i;
+	for (i = 0; i < size; ++i) {
+		uint64_t block_num = block_num_arr[i];
+		lru_node_t *node = (lru_node_t *) lru_hash_map_find(state->_lru->_lru_hash_map, block_num);
+		if (node != NULL) {
+			if (node->_prev_node == NULL && node->_next_node == NULL) { // Only one element.
+				state->_lru->_lru_linked_list->_head = NULL;
+				state->_lru->_lru_linked_list->_tail = NULL;
+			} else if (node->_prev_node == NULL) {  // node is the head.
+				// Modify the next node's previous pointer.
+				node->_next_node->_prev_node = NULL;
+				// Modify the head.
+				state->_lru->_lru_linked_list->_head = node->_next_node;
+			} else if (node->_next_node == NULL) {  // node is the tail.
+				// Modify the previous node's next pointer.
+				node->_prev_node->_next_node = NULL;
+				// Modify the tail.
+				state->_lru->_lru_linked_list->_tail = node->_prev_node;
+			} else {  // node is neither head nor tail.
+				// Modify the previous node's next pointer.
+				node->_prev_node->_next_node = node->_next_node;
+				// Modify the next node's previous pointer.
+				node->_next_node->_prev_node = node->_prev_node;
+			}
+			free(node);
+			lru_hash_map_erase(state->_lru->_lru_hash_map, block_num);
+		}
+	}
+	pthread_mutex_unlock(&lru_lock);
+}
+
 int anti_cache_manager_evict_to_disk(int block_num) {
 	// Evict the blocks to disk here.
-	//TODO (Siddharth Suresh) - Disk Manager
 	if (indir_mapping[block_num] != 0) {
-		struct stat st;
-		//char *filename = "/tmp/1";
-		int fs = stat(diskManagerFileName, &st);
-
-		long int size = 0;
-		if (fs == 0) {
-			size = st.st_size;
-			printf("%ld\n", size);
-		}
-
-		//int fd = open(filename, O_RDWR);
-		//assert(fd > 0);
 		char *buf = get_block(block_num);
 		int disk_block_no = writeBlock(buf);
-		//assert(pwrite(fd, buf, 4096, size) == 4096);
-		//assert(close(fd) == 0);
 
 		uint64_t newpos = disk_block_no;
 		uint64_t no = 1;
