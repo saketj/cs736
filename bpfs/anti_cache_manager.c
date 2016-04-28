@@ -83,7 +83,7 @@ void lru_push(lru_node_t *node) {
 				// The accessed node is already at the head of the list, do nothing.
 				return;
 			} else {
-				assert(node_p->_prev_node != NULL);  // Make sure node_p is not head.
+				assert(node_p->_prev_node != NULL); // Make sure node_p is not head.
 				// Adjust pointers for the nodes around the requested node.
 				node_p->_prev_node->_next_node = node_p->_next_node;
 				if (node_p->_next_node != NULL) {
@@ -222,7 +222,8 @@ int anti_cache_manager_bulk_evict_to_disk(uint64_t* block_num_arr, uint64_t size
 		}
 	}
 
-	uint64_t *disk_block_num_arr = writeBlocksInBulk(block_data_arr, size);
+	uint64_t *disk_block_num_arr = (uint64_t *) malloc(size * sizeof(uint64_t));
+	writeBlocksInBulk(block_data_arr, disk_block_num_arr, size);
 
 	// Update the block number to disk block numbers in the parent pointer.
 	for (i = 0; i < size; ++i) {
@@ -330,7 +331,7 @@ int anti_cache_manager_init(void) {
 }
 
 int anti_cache_manager_access(uint64_t blockno) {
-	assert((blockno & (1<<63)) == 0);
+	assert((blockno & (1 << 63)) == 0);
 	lru_node_t *new_node = (lru_node_t *) malloc(sizeof(lru_node_t));
 	new_node->_blockno = blockno;
 	new_node->_prev_node = NULL;

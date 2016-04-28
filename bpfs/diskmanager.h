@@ -1,4 +1,3 @@
-
 #ifndef DISK_MANAGER_H
 #define DISK_MANAGER_H
 
@@ -20,9 +19,11 @@ void initializeDiskManager(char *fileName, uint64_t fileSize,
 
 char *diskManagerFileName;
 
+void *prefetch_hash_map;
+
 uint64_t fileSize;
 
-#define READ_PREFETCH_BLOCK_COUNT 10
+#define READ_PREFETCH_BLOCK_COUNT 5
 
 uint64_t totalBlockCount;
 
