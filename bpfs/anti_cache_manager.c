@@ -207,6 +207,51 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 	return ANTI_CACHE_BLOCK_EVICTION_SUCCESS;
 }
 
+int anti_cache_manager_bulk_evict_to_disk(uint64_t* block_num_arr, uint64_t size) {
+	char **block_data_arr = (char **) malloc(size * sizeof(char *));
+	uint64_t i = 0;
+
+	// Collect the data of all the blocks that have to be moved to disk.
+	for (i = 0; i < size; ++i) {
+		uint64_t block_num = block_num_arr[i];
+		if (indir_mapping[block_num] != 0) {
+			char *buf = get_block(block_num);
+			block_data_arr[i] = buf;
+		} else {
+			assert(false); // This should not be triggered.
+		}
+	}
+
+	uint64_t *disk_block_num_arr = writeBlocksInBulk(block_data_arr, size);
+
+	// Update the block number to disk block numbers in the parent pointer.
+	for (i = 0; i < size; ++i) {
+		uint64_t block_num = block_num_arr[i];
+		uint64_t disk_block_no = disk_block_num_arr[i];
+
+		uint64_t newpos = disk_block_no;
+		uint64_t no = 1;
+		no = no << 63;
+		uint64_t blockno = newpos | no;
+
+		printf("%ld moving...\n", block_num);
+		struct bpfs_indir_block *indir = (struct bpfs_indir_block*) get_block(
+				indir_mapping[block_num]);
+		int j = 0;
+		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
+			if (indir->addr[j] == block_num) {
+				indir->addr[j] = blockno;
+				printf("%ld moved to disk in %ld.\n", block_num, blockno);
+				free_block(block_num);
+				break;
+			}
+		}
+	}
+	free(block_data_arr);
+	free(disk_block_num_arr);
+	return ANTI_CACHE_BLOCK_EVICTION_SUCCESS;
+}
+
 int anti_cache_manager_update_lru() {
 	// Move accessed block to lru from staging queue.
 	lru_node_t *node = lru_staging_queue_pop();
@@ -220,17 +265,34 @@ int anti_cache_manager_update_lru() {
 }
 
 int anti_cache_manager_evict_blocks() {
-	int evicted_blocks_count = 0;
+	uint64_t evicted_blocks_count = 0;
 	if (state->_lru->_num_elements > ANTI_CACHE_EVICTION_THRESHOLD) {
 		evicted_blocks_count = state->_lru->_num_elements
 				- ANTI_CACHE_EVICTION_THRESHOLD;
-		lru_node_t *node = lru_pop();
-		int i = 0;
-		for (i = 0; i < evicted_blocks_count && node != NULL; ++i) {
-			// Evict and free the current block.
-			anti_cache_manager_evict_to_disk(node->_blockno);
-			free(node);
-			node = lru_pop();
+		if (ANTI_CACHE_BULK_EVICTION_ENABLED) {
+			// Logic to do bulk eviction of multiple blocks.
+			uint64_t *block_num_arr = (uint64_t *) malloc(sizeof(uint64_t) * evicted_blocks_count);
+			lru_node_t *node = lru_pop();
+			uint64_t i = 0;
+			for (i = 0; i < evicted_blocks_count && node != NULL; ++i) {
+				// Store the block no in the array and free the current block.
+				block_num_arr[i] = node->_blockno;
+				free(node);
+				node = lru_pop();
+			}
+			// Pass the stored block number array for bulk eviction.
+			anti_cache_manager_bulk_evict_to_disk(block_num_arr, evicted_blocks_count);
+			free(block_num_arr);
+		} else {
+			// Logic to evict one block at a time.
+			lru_node_t *node = lru_pop();
+			uint64_t i = 0;
+			for (i = 0; i < evicted_blocks_count && node != NULL; ++i) {
+				// Evict and free the current block.
+				anti_cache_manager_evict_to_disk(node->_blockno);
+				free(node);
+				node = lru_pop();
+			}
 		}
 	}
 	return evicted_blocks_count;
