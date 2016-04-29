@@ -608,6 +608,7 @@ void free_block(uint64_t blockno) {
 	no = no << 63;
 	if (blockno & no)
 		return;
+
 	DBprintf("%s() = %" PRIu64 "\n", __FUNCTION__, blockno);
 	assert(blockno != BPFS_BLOCKNO_INVALID);
 #if INDIRECT_COW
@@ -619,6 +620,9 @@ void free_block(uint64_t blockno) {
 #endif
 	assert(BPFS_BLOCKNO_INVALID == 0);
 	bitmap_free(&block_alloc.bitmap, blockno - 1);
+	uint64_t evict_blocks[1];
+	evict_blocks[0] = blockno;
+	anti_cache_manager_delete_lru_entries(evict_blocks, 1);
 #if DETECT_STRAY_ACCESSES
 	xsyscall(mprotect(get_block(blockno), BPFS_BLOCK_SIZE, PROT_NONE));
 #else
@@ -3438,7 +3442,11 @@ static int callback_write(uint64_t blockoff, char *block, unsigned off,
 	if (SCSP_OPT_APPEND && off >= valid)
 		indirect_cow_block_direct(*new_blockno, off, size);
 
-	anti_cache_manager_access(*new_blockno);
+	struct bpfs_super *super = get_super();
+	if (*new_blockno <= super->nblocks) {
+		printf("\nAccessing: \t %ld\n", *new_blockno);
+		anti_cache_manager_access(*new_blockno);
+	}
 
 	return 0;
 }

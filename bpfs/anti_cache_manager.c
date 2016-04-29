@@ -240,6 +240,7 @@ int anti_cache_manager_bulk_evict_to_disk(uint64_t* block_num_arr, uint64_t size
 			char *buf = get_block(block_num);
 			block_data_arr[i] = buf;
 		} else {
+			printf("%ld\n",block_num);
 			assert(false); // This should not be triggered.
 		}
 	}
