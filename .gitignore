@@ -112,7 +112,7 @@ local.properties
 Makefile
 *.make
 obj/
-
+pin/
 
 ### FUSE ###
 bpfs/TAGS

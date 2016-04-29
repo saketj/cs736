@@ -10,7 +10,7 @@
 ##      make PIN_HOME=<top-level directory where Pin was installed>
 ##
 ## After building your tool, you would invoke Pin like this:
-## 
+##
 ##      $PIN_HOME/pin -t MyPinTool -- /bin/ls
 ##
 ##############################################################
@@ -25,6 +25,8 @@
 #    or as an environment variable.
 #
 PIN_HOME ?= pin
+CONFIG_ROOT ?= $(PIN_HOME)/source/tools/Config
+PIN_ROOT ?= pin
 
 
 ##############################################################
@@ -39,22 +41,25 @@ TESTAPP=$(OBJDIR)cp-pin.exe
 
 TARGET_COMPILER?=gnu
 ifdef OS
-    ifeq (${OS},Windows_NT)
-        TARGET_COMPILER=ms
-    endif
+	ifeq (${OS},Windows_NT)
+	TARGET_COMPILER=ms
+	endif
 endif
 
 ifeq ($(TARGET_COMPILER),gnu)
-    include $(PIN_HOME)/source/tools/makefile.gnu.config
-    CXXFLAGS ?= -Wall -Werror -Wno-unknown-pragmas $(DBG) $(OPT)
+	include $(PIN_HOME)/source/tools/Config/makefile.config
+	include $(PIN_HOME)/source/tools/Config/makefile.unix.config
+	include $(PIN_HOME)/source/tools/Config/unix.vars
+	include $(PIN_HOME)/source/tools/Config/makefile.default.rules
+	CXXFLAGS ?= -Wall -Werror -Wno-unknown-pragmas $(DBG) $(OPT)
 	CXXFLAGS += -std=c++0x # Disable for GCC <4.4
-    PIN=$(PIN_HOME)/pin
+	PIN=$(PIN_HOME)/pin
 endif
 
 ifeq ($(TARGET_COMPILER),ms)
-    include $(PIN_HOME)/source/tools/makefile.ms.config
-    DBG?=
-    PIN=$(PIN_HOME)/pin.bat
+	include $(PIN_HOME)/source/tools/makefile.ms.config
+	DBG?=
+	PIN=$(PIN_HOME)/pin.bat
 endif
 
 
@@ -81,7 +86,7 @@ tools: $(OBJDIR) $(TOOLS) $(OBJDIR)cp-pin.exe
 test: $(OBJDIR) $(TOOL_ROOTS:%=%.test)
 
 MyPinTool.test: $(OBJDIR)cp-pin.exe
-      $(MAKE) -k -C MyPinTool PIN_HOME=$(PIN_HOME)
+	$(MAKE) -k -C MyPinTool PIN_HOME=$(PIN_HOME)
 
 $(OBJDIR)cp-pin.exe:
 	$(CXX) $(PIN_HOME)/source/tools/Tests/cp-pin.cpp $(APP_CXXFLAGS) -o $(OBJDIR)cp-pin.exe
@@ -90,12 +95,22 @@ $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
 $(OBJDIR)%.o : %.cpp
-	$(CXX) -c $(CXXFLAGS) $(PIN_CXXFLAGS) ${OUTOPT}$@ $<
+	$(CXX) -c $(CXXFLAGS) $(TOOL_CXXFLAGS_NOOPT) ${COMP_OBJ}$@ $<
 
-$(TOOLS): $(PIN_LIBNAMES)
+#$(TOOLS): $(PIN_LIBNAMES)
 
+#$(TOOLS): %$(PINTOOL_SUFFIX) : %.o
+#	${PIN_LD} $(PIN_LDFLAGS) $(LINK_DEBUG) ${LINK_OUT}$@ $< ${PIN_LPATHS} $(PIN_LIBS) $(DBG)
+
+#$(OBJDIR)%$(OBJ_SUFFIX): %.cpp
+#	$(CXX) -c $(CXXFLAGS) $(TOOL_CXXFLAGS) $(COMP_OBJ)$@ $<
+
+# Build the tool as a dll (shared object).
 $(TOOLS): %$(PINTOOL_SUFFIX) : %.o
-	${PIN_LD} $(PIN_LDFLAGS) $(LINK_DEBUG) ${LINK_OUT}$@ $< ${PIN_LPATHS} $(PIN_LIBS) $(DBG)
+	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $< $(TOOL_LPATHS) $(TOOL_LIBS)
+
+#$(OBJDIR)%$(PINTOOL_SUFFIX): $(OBJDIR)%$(OBJ_SUFFIX)
+	$(LINKER) $(TOOL_LDFLAGS) $(LINK_DEBUG) $(LINK_OUT)$@ $< $(TOOL_LPATHS) $(TOOL_LIBS)
 
 
 ## cleaning
