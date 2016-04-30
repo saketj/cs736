@@ -580,6 +580,7 @@ class filesystem_kernel:
         os.rmdir(self.mnt)
     def format(self):
         cmd = ['sudo', 'mkfs.' + self.fs_name, self.img]
+        cmd.append('-F')
         if self.fs_name in ['ext2', 'ext3', 'ext4']:
             cmd.append('-q')
         subprocess.check_call(cmd, close_fds=True)

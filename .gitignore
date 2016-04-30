@@ -30,7 +30,7 @@
 *.exe
 *.out
 *.app
-
+postmark-1_5
 
 ### CMake ###
 CMakeCache.txt
