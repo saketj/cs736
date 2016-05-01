@@ -12,6 +12,7 @@
 
 #include "anti_cache_manager.h"
 #include "diskmanager.h"
+#include "debug_print.h"
 
 #define FUSE_USE_VERSION FUSE_MAKE_VERSION(2, 8)
 #include <fuse/fuse_lowlevel.h>
@@ -391,8 +392,8 @@ static uint64_t bitmap_alloc(struct bitmap *bitmap) {
 static void bitmap_set(struct bitmap *bitmap, uint64_t no) {
 	char *word = bitmap->bitmap + no / 8;
 	if (no > bitmap->ntotal) {
-		printf("ada");
-		printf("asdas");
+		Dprintf("ada");
+		Dprintf("asdas");
 	}
 	assert(!(*word & (1 << (no % 8))));
 	*word |= (1 << (no % 8));
@@ -723,7 +724,7 @@ char* get_block(uint64_t blockno) {
 		struct stat st;
 		//TODO (Siddharth Suresh) - Disk Manager
 
-		printf("%ld\n", blockno_bt);
+		Dprintf("%ld\n", blockno_bt);
 		assert(stat(diskManagerFileName, &st) == 0);
 		//assert((blockno_bt + 1) * 4096 == st.st_size);
 
@@ -744,7 +745,7 @@ char* get_block(uint64_t blockno) {
 		int j = 0;
 		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
 			if (indir->addr[j] == blockno) {
-				printf("Correct mapping %ld \t %ld\t %ld\n",
+				Dprintf("Correct mapping %ld \t %ld\t %ld\n",
 						current_indir_pointer, blockno, new_block);
 				indir->addr[j] = new_block;
 				found = 1;
@@ -1559,14 +1560,14 @@ static void detect_allocation_diffs(void) {
 static void print_bitmap_differences(const char *name, const char *orig_bitmap,
 		const char *disc_bitmap, size_t size) {
 	size_t i;
-	printf("%s bitmap differences (-1):", name);
+	Dprintf("%s bitmap differences (-1):", name);
 	for (i = 0; i < size; i++) {
 		bool orig = !!(orig_bitmap[i / 8] & (1 << i % 8));
 		bool disc = !!(disc_bitmap[i / 8] & (1 << i % 8));
 		if (orig != disc)
-		printf(" %zu[%d]", i, disc);
+		Dprintf(" %zu[%d]", i, disc);
 	}
-	printf("\n");
+	Dprintf("\n");
 }
 
 static void detect_allocation_diffs(void) {
@@ -1754,7 +1755,9 @@ static int callback_dirent_plug(uint64_t blockoff, char *block, unsigned off,
 
 	assert(commit != COMMIT_NONE);
 	assert(!(off % BPFS_DIRENT_ALIGN));
+#ifndef NDEBUG
 	assert(off + min_hole_size <= end);
+#endif
 	assert(!dirent->rec_len || dirent->rec_len >= min_hole_size);
 	assert(off + dirent->rec_len <= BPFS_BLOCK_SIZE);
 	assert(BPFS_BLOCK_SIZE - off >= min_hole_size);
@@ -3356,7 +3359,7 @@ static int callback_read(uint64_t blockoff, char *block, unsigned off,
 
 	struct bpfs_super *super = get_super();
 	if (*new_blockno <= super->nblocks) {
-		printf("\nAccessing: \t %ld\n", *new_blockno);
+		Dprintf("\nAccessing: \t %ld\n", *new_blockno);
 		anti_cache_manager_access(*new_blockno);
 	}
 
@@ -3444,7 +3447,7 @@ static int callback_write(uint64_t blockoff, char *block, unsigned off,
 
 	struct bpfs_super *super = get_super();
 	if (*new_blockno <= super->nblocks) {
-		printf("\nAccessing: \t %ld\n", *new_blockno);
+		Dprintf("\nAccessing: \t %ld\n", *new_blockno);
 		anti_cache_manager_access(*new_blockno);
 	}
 
@@ -3734,7 +3737,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Unable to allocate memory\n");
 		return -1;
 	} else {
-		printf("No of blocks%ld\n", bpfs_super->nblocks);
+		Dprintf("No of blocks%ld\n", bpfs_super->nblocks);
 	}
 
 	if (recover_superblock() < 0) {
@@ -3795,10 +3798,10 @@ int main(int argc, char **argv) {
 
 	if (getenv("RFSCK")) {
 #if BLOCK_POISON
-		printf("Not enabling random fsck: BLOCK_POISON is enabled.\n");
+		Dprintf("Not enabling random fsck: BLOCK_POISON is enabled.\n");
 #elif INDIRECT_COW
 		// There are periods when bpfs_super does not agree with the bitmaps
-		printf("Not enabling random fsck: INDIRECT_COW is enabled.\n");
+		Dprintf("Not enabling random fsck: INDIRECT_COW is enabled.\n");
 #else
 		struct itimerval itv;
 
@@ -3809,7 +3812,7 @@ int main(int argc, char **argv) {
 
 		xsyscall(getitimer(ITIMER_VIRTUAL, &itv));
 		if (itv.it_value.tv_sec || itv.it_value.tv_usec)
-			printf(
+			Dprintf(
 					"ITIMER_VIRTUAL already in use. Not enabling random fsck.\n");
 		else {
 			xassert(!signal(SIGVTALRM, random_fsck));
@@ -3820,7 +3823,7 @@ int main(int argc, char **argv) {
 	}
 
 #if BLOCK_POISON
-	printf("Block poisoning enabled. Write counting will be incorrect.\n");
+	Dprintf("Block poisoning enabled. Write counting will be incorrect.\n");
 #endif
 
 	xcall(dcache_init());
@@ -3893,12 +3896,12 @@ int main(int argc, char **argv) {
 	fargv = NULL;
 
 #if COMMIT_MODE == MODE_BPFS
-	printf("CoW: %" PRIu64 " bytes in %" PRIu64 " blocks\n", cow_nbytes,
+	Dprintf("CoW: %" PRIu64 " bytes in %" PRIu64 " blocks\n", cow_nbytes,
 			cow_nblocks);
 #else
 // MODE_SP: doesn't count superblock
 // MODE_SCSP: current implementation can un-CoW
-	printf("CoW: -1 bytes in -1 blocks\n");
+	Dprintf("CoW: -1 bytes in -1 blocks\n");
 #endif
 
 	dcache_destroy();

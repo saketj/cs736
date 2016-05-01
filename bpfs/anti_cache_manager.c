@@ -6,6 +6,7 @@
 #include "lru_hash_map_interface.h"
 #include "bpfs.h"
 #include "diskmanager.h"
+#include "debug_print.h"
 
 #include <pthread.h>
 #include <stdio.h>
@@ -140,15 +141,15 @@ lru_node_t* lru_pop() {
 
 void print_lru_contents() {
 	lru_node_t *node = state->_lru->_lru_linked_list->_head;
-	printf("[");
+	Dprintf("[");
 	while (node != state->_lru->_lru_linked_list->_tail) {
-		printf("%d, ", node->_blockno);
+		Dprintf("%d, ", node->_blockno);
 		node = node->_next_node;
 	}
 	if (node != NULL) {
-		printf("%d", node->_blockno);
+		Dprintf("%d", node->_blockno);
 	}
-	printf("]\n");
+	Dprintf("]\n");
 }
 
 void lru_init(lru_t **lru) {
@@ -213,14 +214,14 @@ int anti_cache_manager_evict_to_disk(int block_num) {
 		uint64_t blockno_bt = blockno ^ no;
 		assert(blockno_bt == newpos);
 
-		printf("%ldMoving \n", block_num);
+		Dprintf("%ldMoving \n", block_num);
 		struct bpfs_indir_block *indir = (struct bpfs_indir_block*) get_block(
 				indir_mapping[block_num]);
 		int j = 0;
 		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
 			if (indir->addr[j] == block_num) {
 				indir->addr[j] = blockno;
-				printf("%ldMoving to disk in %ld \n", block_num, blockno);
+				Dprintf("%ldMoving to disk in %ld \n", block_num, blockno);
 				free_block(block_num);
 				break;
 			}
@@ -240,7 +241,7 @@ int anti_cache_manager_bulk_evict_to_disk(uint64_t* block_num_arr, uint64_t size
 			char *buf = get_block(block_num);
 			block_data_arr[i] = buf;
 		} else {
-			printf("%ld\n",block_num);
+			Dprintf("%ld\n",block_num);
 			assert(false); // This should not be triggered.
 		}
 	}
@@ -258,14 +259,14 @@ int anti_cache_manager_bulk_evict_to_disk(uint64_t* block_num_arr, uint64_t size
 		no = no << 63;
 		uint64_t blockno = newpos | no;
 
-		printf("%ld moving...\n", block_num);
+		Dprintf("%ld moving...\n", block_num);
 		struct bpfs_indir_block *indir = (struct bpfs_indir_block*) get_block(
 				indir_mapping[block_num]);
 		int j = 0;
 		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
 			if (indir->addr[j] == block_num) {
 				indir->addr[j] = blockno;
-				printf("%ld moved to disk in %ld.\n", block_num, blockno);
+				Dprintf("%ld moved to disk in %ld.\n", block_num, blockno);
 				free_block(block_num);
 				break;
 			}
@@ -326,12 +327,12 @@ void *anti_cache_manager_main(void *state) {
 	while (1) {
 		usleep(ANTI_CACHE_INVOCATION_INTERVAL);
 		int added_blocks_count = anti_cache_manager_update_lru();
-		printf("Anti cache manager added %d blocks to lru.\n",
+		Dprintf("Anti cache manager added %d blocks to lru.\n",
 				added_blocks_count);
 		int evicted_blocks_count = anti_cache_manager_evict_blocks();
-		printf("Anti cache manager evicted %d blocks to disk.\n",
+		Dprintf("Anti cache manager evicted %d blocks to disk.\n",
 				evicted_blocks_count);
-		printf("Current LRU contents: ");
+		Dprintf("Current LRU contents: ");
 		print_lru_contents();
 	}
 }

@@ -1,5 +1,7 @@
 #include "diskmanager.h"
 #include "lru_hash_map_interface.h"
+#include "debug_print.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -14,7 +16,7 @@
 // Have a way of moving multiple blocks to and fro disk
 
 void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
-	printf(
+	Dprintf(
 			"Initializing Disk Manager with filename %s, size of file: %ld and block size: %ld\n",
 			fileName, size, blockSize);
 	diskManagerFileName = strdup(fileName);
@@ -22,7 +24,7 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 	totalBlockCount = fileSize / blockSize;
 	diskManagerBlockSize = blockSize;
 	prefetch_hash_map = lru_hash_map_init();
-	printf("Completed Initializing Disk Manager\n");
+	Dprintf("Completed Initializing Disk Manager\n");
 
 }
 
@@ -30,7 +32,7 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 
 int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 
-	printf("Inside Disk Manager readBlockswithprefetch for blockNumber: %ld\n",
+	Dprintf("Inside Disk Manager readBlockswithprefetch for blockNumber: %ld\n",
 			blockNumber);
 	if (buf == NULL)
 		return -1;
@@ -42,7 +44,7 @@ int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 			return 1;
 		}
 	}
-	printf(
+	Dprintf(
 			"After checking prefetched info inside readblockswithprefetch: %ld\n",
 			blockNumber);
 
@@ -58,26 +60,26 @@ int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 		maxPrefetch = currentDiskBlockNumber - blockNumber;
 	}
 
-	printf("maxprefetch: %ld currentDiskBlockNumber:%ld blockNumber:%ld\n",
+	Dprintf("maxprefetch: %ld currentDiskBlockNumber:%ld blockNumber:%ld\n",
 			maxPrefetch, currentDiskBlockNumber, blockNumber);
 	assert(
 			pread(fd, tempbuf, maxPrefetch * diskManagerBlockSize, offset)
 					== maxPrefetch * diskManagerBlockSize);
 	memcpy(buf, tempbuf, diskManagerBlockSize);
 	buf[diskManagerBlockSize] = '\0';
-	printf("copied data into buffer inside readBlocksWithPrefetch: %ld\n",
+	Dprintf("copied data into buffer inside readBlocksWithPrefetch: %ld\n",
 			blockNumber);
 	//TODO (Siddharth) - What if after prefetching block is updated.
 	int i = 0;
 
 	for (; i < maxPrefetch; i++) {
-		printf("Inserting the %d block into the hash map", i);
+		Dprintf("Inserting the %d block into the hash map", i);
 		lru_hash_map_insert(prefetch_hash_map, blockNumber + i,
 				(void *) (tempbuf + i * diskManagerBlockSize));
 	}
 
 	assert(close(fd) == 0);
-	printf("Completed reading block number %ld and contents are %s\n",
+	Dprintf("Completed reading block number %ld and contents are %s\n",
 			blockNumber, buf);
 	return 1;
 
@@ -85,14 +87,14 @@ int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 
 int readBlock(uint64_t blockNumber, char *buf) {
 
-	printf("Inside Disk Manager readBlock for blockNumber: %ld\n", blockNumber);
+	Dprintf("Inside Disk Manager readBlock for blockNumber: %ld\n", blockNumber);
 	int fd = open(diskManagerFileName, O_RDWR);
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
 	assert(
 			pread(fd, buf, diskManagerBlockSize, offset)
 					== diskManagerBlockSize);
 	assert(close(fd) == 0);
-	printf("Completed reading block number %ld and contents are %s\n",
+	Dprintf("Completed reading block number %ld and contents are %s\n",
 			blockNumber, buf);
 	return 1;
 
@@ -100,16 +102,16 @@ int readBlock(uint64_t blockNumber, char *buf) {
 
 void writeBlocksInBulk(char **buf, uint64_t *returnBlockNumbers, uint64_t numberOfBlocks) {
 
-	printf("Inside Disk Manager writeBlocksInBulk\n");
+	Dprintf("Inside Disk Manager writeBlocksInBulk\n");
 	int i = 0;
 	int fd = open(diskManagerFileName, O_RDWR);
 	for (; i < numberOfBlocks; i++) {
-		printf("Calling findfreeblock for block: %d\n", i);
+		Dprintf("Calling findfreeblock for block: %d\n", i);
 		uint64_t blockNumber = findFreeBlock();
 		if (blockNumber == -1) {
 			return NULL; //failure to write block. couldnt find free block
 		}
-		printf("New block number from findfreeblock for block %d: %ld\n", i,
+		Dprintf("New block number from findfreeblock for block %d: %ld\n", i,
 				blockNumber);
 		uint64_t offset = (blockNumber) * diskManagerBlockSize;
 		char *tempbuf = *(buf + i);
@@ -120,11 +122,11 @@ void writeBlocksInBulk(char **buf, uint64_t *returnBlockNumbers, uint64_t number
 
 	}
 	assert(close(fd) == 0);
-	printf("Completed writing in bulk to disk\n");	
+	Dprintf("Completed writing in bulk to disk\n");
 }
 
 void addBlockToFreeList(uint64_t blockNumber) {
-	printf("Inside addBlockToFreeList: %ld\n", blockNumber);
+	Dprintf("Inside addBlockToFreeList: %ld\n", blockNumber);
 	struct freeListNode *temp = (struct freeListNode *) malloc(
 			sizeof(struct freeListNode));
 	temp->blockNumber = blockNumber;
@@ -143,18 +145,18 @@ uint64_t getBlockFromFreeList() {
 	if (freeList == NULL) {
 		return -1;
 	}
-	printf("Inside disk manager getBlockFromFreeList\n");
+	Dprintf("Inside disk manager getBlockFromFreeList\n");
 	uint64_t bNumber = freeList->blockNumber;
 	struct freeListNode *temp = freeList;
 	freeList = freeList->next;
 	free(temp);
-	printf("FreeList block number: %ld", bNumber);
+	Dprintf("FreeList block number: %ld", bNumber);
 	return bNumber;
 }
 
 int freeBlock(uint64_t blockNumber) {
 
-	printf("Inside disk manager freeBlock with block number %ld\n",
+	Dprintf("Inside disk manager freeBlock with block number %ld\n",
 			blockNumber);
 	char block[diskManagerBlockSize];
 	int i;
@@ -176,49 +178,49 @@ int freeBlock(uint64_t blockNumber) {
 		}
 	}
 	assert(close(fd) == 0);
-	printf("Completed freeing block on disk\n");
+	Dprintf("Completed freeing block on disk\n");
 	addBlockToFreeList(blockNumber);
 	return 1;
 }
 
 int writeBlock(char *buf) {
-	printf("Inside Disk Manager writeBlock\n");
-	printf("Calling findfreeblock\n");
+	Dprintf("Inside Disk Manager writeBlock\n");
+	Dprintf("Calling findfreeblock\n");
 	uint64_t blockNumber = findFreeBlock();
 	if (blockNumber == -1) {
 		return -1; //failure to write block. couldnt find free block
 	}
-	printf("New block number from findfreeblock: %ld\n", blockNumber);
+	Dprintf("New block number from findfreeblock: %ld\n", blockNumber);
 	int fd = open(diskManagerFileName, O_RDWR);
 	uint64_t offset = (blockNumber) * diskManagerBlockSize;
 	assert(
 			pwrite(fd, buf, diskManagerBlockSize, offset)
 					== diskManagerBlockSize);
 	assert(close(fd) == 0);
-	printf("Completed writing to disk\n");
+	Dprintf("Completed writing to disk\n");
 	return blockNumber;
 }
 
 int findFreeBlock() {
 
-	printf("Inside Disk Manager findFreeBlock\n");
+	Dprintf("Inside Disk Manager findFreeBlock\n");
 	uint64_t blockNumber;
 	if (currentDiskBlockNumber >= (totalBlockCount - 1)) {
-		printf(
+		Dprintf(
 				"current block number has exceeded disk space.. Fetching blocks from free list\n");
 		uint64_t freeListBlockNumber = getBlockFromFreeList();
 		if (freeListBlockNumber == -1) {
-			printf("No free blocks on disk\n");
+			Dprintf("No free blocks on disk\n");
 			return -1;  //No space in file to allocate
 		}
 
 		blockNumber = freeListBlockNumber;
 	} else {
-		printf("current block number: %ld\n", currentDiskBlockNumber);
+		Dprintf("current block number: %ld\n", currentDiskBlockNumber);
 		blockNumber = currentDiskBlockNumber;
 		currentDiskBlockNumber++;
 	}
 
-	printf("Free block number: %ld\n", blockNumber);
+	Dprintf("Free block number: %ld\n", blockNumber);
 	return blockNumber;
 }
