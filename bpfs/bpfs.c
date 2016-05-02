@@ -691,6 +691,39 @@ static void commit_blocks(void) {
 	bitmap_commit(&block_alloc.bitmap);
 }
 
+uint64_t get_block_from_disk(uint64_t blockno, uint64_t indir_pointer) {
+
+	uint64_t no = 1;
+	no = no << 63;
+
+	if (blockno & no) {
+		uint64_t blockno_bt = blockno ^ no;
+		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
+		assert(readBlock(blockno_bt, buf) == 1);
+		int found = 0;
+		uint64_t new_block = alloc_block();
+		char * new_block_ptr = bpram + (new_block - 1) * BPFS_BLOCK_SIZE;
+		memcpy(new_block_ptr, buf, 4096);
+		struct bpfs_indir_block *indir = (struct bpfs_indir_block*) get_block(
+				indir_pointer);
+		int j = 0;
+		for (j = 0; j < BPFS_BLOCKNOS_PER_INDIR; j++) {
+			if (indir->addr[j] == blockno) {
+				Dprintf("Correct mapping %ld \t %ld\t %ld\n", indir_pointer,
+						blockno, new_block);
+				indir->addr[j] = new_block;
+				found = 1;
+				return new_block;
+				break;
+			}
+		}
+		if (!found) {
+			assert(0);
+			return -1;
+		}
+	}
+	return -1;
+}
 char* get_block(uint64_t blockno) {
 
 #if INDIRECT_COW
@@ -3359,8 +3392,10 @@ static int callback_read(uint64_t blockoff, char *block, unsigned off,
 
 	struct bpfs_super *super = get_super();
 	if (*new_blockno <= super->nblocks) {
-		Dprintf("\nAccessing: \t %ld\n", *new_blockno);
-		anti_cache_manager_access(*new_blockno);
+		if (indir_mapping[*new_blockno] != 0) {
+			Dprintf("\nAccessing: \t %ld\n", *new_blockno);
+			anti_cache_manager_access(*new_blockno);
+		}
 	}
 
 	struct iovec *iov = iov_void;
@@ -3424,7 +3459,7 @@ static int callback_write(uint64_t blockoff, char *block, unsigned off,
 		unsigned size, unsigned valid, uint64_t crawl_start, enum commit commit,
 		void *buf, uint64_t *new_blockno) {
 	uint64_t buf_offset = blockoff * BPFS_BLOCK_SIZE + off - crawl_start;
-
+	uint64_t prev_blockno = *new_blockno;
 	assert(commit != COMMIT_NONE);
 	if (!(commit == COMMIT_FREE || (SCSP_OPT_APPEND && off >= valid)
 			|| (COMMIT_MODE == MODE_BPFS
@@ -3447,8 +3482,11 @@ static int callback_write(uint64_t blockoff, char *block, unsigned off,
 
 	struct bpfs_super *super = get_super();
 	if (*new_blockno <= super->nblocks) {
-		Dprintf("\nAccessing: \t %ld\n", *new_blockno);
-		anti_cache_manager_access(*new_blockno);
+		if (indir_mapping[*new_blockno] != 0) {
+			Dprintf("\nAccessing: \t %ld\n", *new_blockno);
+			anti_cache_manager_access(*new_blockno);
+		}
+
 	}
 
 	return 0;

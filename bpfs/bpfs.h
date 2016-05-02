@@ -81,6 +81,7 @@ uint64_t* indir_mapping;
 static uint64_t candidate_blocks[] = {10,14,18,22,26,30,34,38,42,46,51,55,57,61,65};
 uint64_t current_indir_pointer;
 char* get_block(uint64_t blockno);
+uint64_t get_block_from_disk(uint64_t blockno, uint64_t indir_pointer);
 static __inline
 unsigned block_offset(const void *x) __attribute__((always_inline));
 void unfree_block(uint64_t blockno);

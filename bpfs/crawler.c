@@ -190,11 +190,17 @@ static int crawl_indir(uint64_t prev_blockno, uint64_t blockoff, uint64_t off,
 
 		if (commit != COMMIT_NONE)
 			xcall(indirect_cow_parent_push(blockno));
-		if (height == 1)
+		if (height == 1) {
+			uint64_t no = 1;
+			no = no << 63;
+			if (child_blockno & no) {
+				child_blockno = get_block_from_disk(child_blockno,blockno);
+				child_new_blockno = child_blockno;
+			}
 			r = crawl_leaf(child_blockno, child_blockoff, child_off, child_size,
 					child_valid, crawl_start, child_commit, callback, user,
 					bcallback, &child_new_blockno, blockno);
-		else
+		} else
 			r = crawl_indir(child_blockno, child_blockoff, child_off,
 					child_size, child_valid, crawl_start, child_commit,
 					height - 1, child_max_nblocks, callback, user, bcallback,
