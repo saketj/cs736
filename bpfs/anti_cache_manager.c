@@ -24,6 +24,7 @@
 static pthread_t anti_cache_manager_thread;
 static pthread_mutex_t lru_staging_queue_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t lru_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t global_lock = PTHREAD_MUTEX_INITIALIZER;
 static anti_cache_manager_state_t *state;
 
 void lru_staging_queue_push(lru_node_t *node) {
@@ -326,6 +327,7 @@ int anti_cache_manager_evict_blocks() {
 void *anti_cache_manager_main(void *state) {
 	while (1) {
 		usleep(ANTI_CACHE_INVOCATION_INTERVAL);
+		pthread_mutex_lock(&global_lock);
 		int added_blocks_count = anti_cache_manager_update_lru();
 		Dprintf("Anti cache manager added %d blocks to lru.\n",
 				added_blocks_count);
@@ -334,7 +336,16 @@ void *anti_cache_manager_main(void *state) {
 				evicted_blocks_count);
 		Dprintf("Current LRU contents: ");
 		print_lru_contents();
+		pthread_mutex_unlock(&global_lock);
 	}
+}
+
+void anti_cache_manager_global_lock() {
+	pthread_mutex_lock(&global_lock);
+}
+
+void anti_cache_manager_global_unlock() {
+	pthread_mutex_unlock(&global_lock);
 }
 
 int anti_cache_manager_init(void) {

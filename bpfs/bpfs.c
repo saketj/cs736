@@ -412,7 +412,7 @@ static bool bitmap_ensure_set(struct bitmap *bitmap, uint64_t no) {
 }
 
 static void bitmap_free(struct bitmap *bitmap, uint64_t no) {
-	struct staged_entry *staged = malloc(sizeof(*staged));
+	struct staged_entry *staged = malloc(sizeof(struct staged_entry));
 
 	assert(no < bitmap->ntotal);
 	assert(bitmap->bitmap[no / 8] & (1 << (no % 8)));
@@ -3525,6 +3525,7 @@ static void fuse_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
 		size_t size, off_t off, struct fuse_file_info *fi) {
 // cast away const for crawl_data(), since it accepts char* (but won't
 // modify). cast into a new variable to avoid spurious compile warning.
+	anti_cache_manager_global_lock();
 	char *buf_unconst = (char*) buf;
 	int r;
 	UNUSED(fi);
@@ -3550,6 +3551,7 @@ static void fuse_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
 		bpfs_commit();
 		xcall(fuse_reply_write(req, size));
 	}
+	anti_cache_manager_global_unlock();
 }
 
 #if 0
