@@ -3551,7 +3551,7 @@ static void fuse_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
 		bpfs_commit();
 		xcall(fuse_reply_write(req, size));
 	}
-	anti_cache_manager_global_unlock();
+	//anti_cache_manager_global_unlock();
 }
 
 #if 0
