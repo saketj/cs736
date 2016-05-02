@@ -699,7 +699,7 @@ uint64_t get_block_from_disk(uint64_t blockno, uint64_t indir_pointer) {
 	if (blockno & no) {
 		uint64_t blockno_bt = blockno ^ no;
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlock(blockno_bt, buf) == 1);
+		assert(readBlocksWithPrefetch(blockno_bt, buf) == 1);
 		int found = 0;
 		uint64_t new_block = alloc_block();
 		char * new_block_ptr = bpram + (new_block - 1) * BPFS_BLOCK_SIZE;
@@ -764,7 +764,7 @@ char* get_block(uint64_t blockno) {
 		//int fd = open(filename, O_RDONLY);
 		//assert(fd > 0);
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlock(blockno_bt, buf) == 1);
+		assert(readBlocksWithPrefetch(blockno_bt, buf) == 1);
 		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
 		//assert(close(fd) == 0);
 
