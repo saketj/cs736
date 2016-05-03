@@ -14,15 +14,36 @@ For the purpose of the evaluation, we run our experiments on a real hardware wit
 \subsection{Experimental evaluations}
 In this section we present the experimental evaluations of this file system using differnt micro and macro benchmarks and throughput evalations and offer comparisons with those of BPFS and ext4 file-systems. 
 
-\subsubsection{Microbenchmarks}
-\begin{figure}
-\centering
-\vspace{-0.2in}
-\includegraphics[width=0.5\textwidth]{figs/append.pdf}
-\vspace{-0.2in}
-\mycaption{fig-append}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system. XXX}
-\end{figure}
+\subsubsection{Microbenchmark: Various File Operations}
+In order to ensure the correctness of various file operations and to measure cost of additional overheads due to added behaviors such as anti-caching, we benchmarked 40 different file operations. We used 'timeit' package in Python programming language to measure the time for these operations. Table 5.1 shows a representative sample of those operations for both AC\-BPFS and BPFS. The table shows that for the file operations the added overhead is negligible, if any at all. We also performed similar benchmarks for all the file operations in the ext4 file system. Since the time taken for each of the file operations were in the order of one tenth of a millisecond without fsync and in the order of 10 milliseconds with fync enabled, the benchmarks for the operations in the ext4 file systems are not shown in the table.
 
+\subsubsection{Microbenchmark: Random write}
+. We evaluated the performance of making random write operations for various data size for AC\_BPFS, BPFS and ext4. For the AC\-BPFS, to ensure uniform distribution of write operations to data blocks in both the persistent memory and the disk, we pre-generated a list of files of various sizes and random offsets with in those files. We ensured that data chucks written at random offsets exceeded the pre-specified cache threshold to force seek from the disk. We called 'fsync' after every write call to force the data to disk so as to make even comparisons across the filesystems. We used UNIX 'clock\_gettime' system call to measure the time for this benchmark.
+
+Figure 5.1 (a) shows the results for this micro-benchmark. Both AC\_BPFS and BPFS are faster than the ext4 in orders of magnitude, as we hoped. It also shows that AC\-BFPS, although starts to lag behind the BPFS as the size of the data being written increases, it does not lag significantly, that reinforces our initial intuition and supports our objective.
+
+
+
+\subsubsection{Microbenchmark: Append}
+
+We measured the cost of appending data chunks of various size to an empty file. As with the benchmark for the random write, we called ‘fsync’ after every write call to ensure that the data gets written to the disk. We used UNIX 'clock\_gettime' system call to measure the time for this benchmark.
+
+As with random write, Figure 5.1(b) shows that both AC\-BPFS and BPFS are faster than the ext4 in orders of magnitude. Since the writing of all the data for the ‘append’ operation happened entirely in memory, AC\-BPFS and BPFS performance lines are virtually inseparable. This result justifies the anti-caching mechanism that we have employed and also illustrates its low overhead.
+
+
+\subsubsection{Microbenchmark: Degree of hotness}
+
+This synthetic benchmark is used to demonstrate the effect of storing hot data in NVM and cold data on disk. The experimental setup consists of a 2GB NVM, a 400MB eviction threshold. Initially a 1GB file is written to both the file system, which triggers the anti-cache manager to evict 600MB of the file onto the disk and the remaining 400MB remains in the NVM. For varying degrees of coldness (say X), reads are performed to various blocks of the file either located on disk or NVM to ensure that X\% of the block reads are from disk and the remaining block reads are from NVM. So as the graph indicates, when the degree of coldness is 100\%, it implies that all the reads performed by the workload are from disk and the read latency is similar to that of ext4 as expected. But as the degree of hotness becomes 40\%, the read latency decreases in AC-BPFS as the number of disk reads decreases but this triggers eviction by the anti-cache manager. This introduces a slight additional overhead during each read because some of the blocks that were expected to be in the NVM could have gotten evicted and hence would result in a disk read. This graph also proves that the rate of decline in the read latency increases as as the degree of coldness decreases since the number of blocks evicted decreases and thus the probability of reading from NVM increases.
+
+
+ 
+\subsubsection{Macrobenchmark: File Bench}
+
+ For this benchmark, we used FileBench to test and compare the performance of the three files systems by generating a large variety of workloads {cite} of size 1.25 GB. The workload is comprised of 33\% read requests and 67\% write requests. For the AC\-BPFS, we ran the benchmark by varying the (anti) caching thresholds – from 20\% of the workload size to 100\% of the workload size. We did so in order to get insights on the effectiveness and overheads of the anti-caching mechanisms in addition to making comparison of the AC\-BPFS with BPFS and ext4 file systems.
+
+The figure shows that when the caching threshold is 100\% of the workload size (i.e. all the operations happen in the persistent memory), the performance of AC\-BPFS is identical to that of BPFS, as we expected. As we decrease the caching threshold, the performance suffers accordingly. On all times, the performance of the AC\-BPFS is better than that of ext4 in orders of magnitude.
+
+ 
 
 
 \begin{tabular}{ |p{3cm}||p{3cm}|p{3cm}|p{3cm}|  }
