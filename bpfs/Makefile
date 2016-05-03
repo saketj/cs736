@@ -73,7 +73,7 @@ hash_map.o: hash_map.c hash_map.h vector.h pool.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 bpfs: bpfs.o anti_cache_manager.o crawler.o indirect_cow.o mkbpfs.o dcache.o hash_map.o vector.o diskmanager.o lru_hash_map.o
-	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^ `pkg-config --libs fuse` -luuid
+	$(CXX) $(CFLAGS) $(LDFLAGS) -o $@ $^ `pkg-config --libs fuse` -luuid -lrt
 
 mkfs.bpfs: mkfs.bpfs.o mkbpfs.o
 	$(CC) $(CFLAGS) -o $@ $^ -luuid

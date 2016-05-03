@@ -13,11 +13,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <fcntl.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 
-#define SM_SIZE 8
-#define SM_KEY 5678
-
-static char *shm;
+static int shm_fd;
+static void *ptr;
+static const int SIZE = 8;
+static const char *name = "/smflag";
 
 // Not open and close file every time. This will cause the file to flush
 // Have a way of moving multiple blocks to and fro disk
@@ -41,6 +45,29 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 	diskManagerBlockSize = blockSize;
 	prefetch_hash_map = lru_hash_map_init();
 
+	const char *name = "/smflag";
+	/* create the shared memory segment */
+	shm_fd = shm_open(name, O_CREAT | O_RDWR, S_IRWXU | S_IRWXG);
+	if (shm_fd < 0)
+    {
+        printf("In shm_open() %d\n", shm_fd);
+        exit(1);
+    }
+
+	/* configure the size of the shared memory segment */
+	ftruncate(shm_fd,SIZE);
+
+	/* now map the shared memory segment in the address space of the process */
+	ptr = mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (ptr == MAP_FAILED) {
+		printf("Map failed\n");
+		return -1;
+	}
+
+	// Set sync to false.
+	int *shm = (int *) ptr;
+	*shm = 0;
+
 	//Dprintf("Completed Initializing Disk Manager\n");
 
 }
@@ -51,6 +78,12 @@ int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 
 	//Dprintf("Inside Disk Manager readBlockswithprefetch for blockNumber: %ld\n",
 		//	blockNumber);
+	int *shm = (int *) ptr;
+	printf("here %d", *shm);
+	if (*shm != 0) {
+		printf("enabled\n");
+		clear_disk_cache();
+	}
 
 	if (buf == NULL)
 		return -1;
