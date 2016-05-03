@@ -26,7 +26,7 @@ using namespace std;
 const char *DISK_CACHE_CLEAR_CMD = "sync ; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'";
 const int BLOCK_READ_SIZE = 4096;
 const int BPFS_BLOCK_SIZE = 4096;
-const int NUM_TRIALS = 10;
+const int NUM_TRIALS = 1000;
 
 void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, int hotness_factor);
 void run_ext4_benchmark(string file_name, int file_size);
@@ -107,6 +107,7 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
           break;
         }
       }
+      clear_disk_cache();
     }
 
     long begin = get_high_precision_time();
@@ -118,10 +119,9 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
     cumm_time += (run_time);
   }
 
-  long avg_time = cumm_time / NUM_TRIALS;
-  double avg_time_in_ms = (double) avg_time / (double) (1000000);
+  double cumm_time_in_ms = (double) cumm_time / (double) (1000000);
 
-  printf("BPFS benchmark time: %f milliseconds.\n", avg_time_in_ms);
+  printf("BPFS benchmark time: %f milliseconds.\n", cumm_time_in_ms);
 }
 
 void run_ext4_benchmark(string file_name, int file_size) {
@@ -146,8 +146,7 @@ void run_ext4_benchmark(string file_name, int file_size) {
     cumm_time += (run_time);
   }
 
-  long avg_time = cumm_time / NUM_TRIALS;
-  double avg_time_in_ms = (double) avg_time / (double) (1000000);
+  double cumm_time_in_ms = (double) cumm_time / (double) (1000000);
 
-  printf("Ext4 benchmark time: %f milliseconds.\n", avg_time_in_ms);
+  printf("Ext4 benchmark time: %f milliseconds.\n", cumm_time_in_ms);
 }
