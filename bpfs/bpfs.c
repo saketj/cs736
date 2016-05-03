@@ -699,7 +699,7 @@ uint64_t get_block_from_disk(uint64_t blockno, uint64_t indir_pointer) {
 	if (blockno & no) {
 		uint64_t blockno_bt = blockno ^ no;
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlock(blockno_bt, buf) == 1);
+		assert(readBlocksWithPrefetch(blockno_bt, buf) == 1);
 		int found = 0;
 		uint64_t new_block = alloc_block();
 		char * new_block_ptr = bpram + (new_block - 1) * BPFS_BLOCK_SIZE;
@@ -764,7 +764,7 @@ char* get_block(uint64_t blockno) {
 		//int fd = open(filename, O_RDONLY);
 		//assert(fd > 0);
 		char * buf = (char *) malloc(DISK_BLOCK_SIZE);
-		assert(readBlock(blockno_bt, buf) == 1);
+		assert(readBlocksWithPrefetch(blockno_bt, buf) == 1);
 		//assert(pread(fd, buf, 4096, blockno_bt * 4096) == 4096);
 		//assert(close(fd) == 0);
 
@@ -3525,7 +3525,7 @@ static void fuse_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
 		size_t size, off_t off, struct fuse_file_info *fi) {
 // cast away const for crawl_data(), since it accepts char* (but won't
 // modify). cast into a new variable to avoid spurious compile warning.
-	anti_cache_manager_global_lock();
+//	anti_cache_manager_global_lock();
 	char *buf_unconst = (char*) buf;
 	int r;
 	UNUSED(fi);
@@ -3551,7 +3551,7 @@ static void fuse_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
 		bpfs_commit();
 		xcall(fuse_reply_write(req, size));
 	}
-	anti_cache_manager_global_unlock();
+	//anti_cache_manager_global_unlock();
 }
 
 #if 0

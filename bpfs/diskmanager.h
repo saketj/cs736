@@ -23,7 +23,7 @@ void *prefetch_hash_map;
 
 uint64_t fileSize;
 
-#define READ_PREFETCH_BLOCK_COUNT 5
+#define READ_PREFETCH_BLOCK_COUNT 2304
 
 uint64_t totalBlockCount;
 

@@ -268,7 +268,7 @@ int anti_cache_manager_bulk_evict_to_disk(uint64_t* block_num_arr, uint64_t size
 			if (indir->addr[j] == block_num) {
 				indir->addr[j] = blockno;
 				Dprintf("%ld moved to disk in %ld.\n", block_num, blockno);
-				free_block(block_num);
+				//free_block(block_num);
 				break;
 			}
 		}
@@ -327,7 +327,7 @@ int anti_cache_manager_evict_blocks() {
 void *anti_cache_manager_main(void *state) {
 	while (1) {
 		usleep(ANTI_CACHE_INVOCATION_INTERVAL);
-		pthread_mutex_lock(&global_lock);
+		//pthread_mutex_lock(&global_lock);
 		int added_blocks_count = anti_cache_manager_update_lru();
 		Dprintf("Anti cache manager added %d blocks to lru.\n",
 				added_blocks_count);
@@ -336,7 +336,7 @@ void *anti_cache_manager_main(void *state) {
 				evicted_blocks_count);
 		Dprintf("Current LRU contents: ");
 		print_lru_contents();
-		pthread_mutex_unlock(&global_lock);
+		//pthread_mutex_unlock(&global_lock);
 	}
 }
 
