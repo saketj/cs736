@@ -26,7 +26,7 @@ using namespace std;
 const char *DISK_CACHE_CLEAR_CMD = "sync ; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'";
 const int BLOCK_READ_SIZE = 4096;
 const int BPFS_BLOCK_SIZE = 4096;
-const int NUM_TRIALS = 1000;
+const int NUM_TRIALS = 100;
 
 void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, int hotness_factor);
 void run_ext4_benchmark(string file_name, int file_size);
@@ -57,8 +57,6 @@ int main(int argc, char **argv) {
     cout<<"Unknown filesystem type "<< fs_type <<". \n";
     exit(0);
   }
-  long begin = get_high_precision_time();
-  long end = get_high_precision_time();
   return 0;
 }
 
@@ -110,9 +108,9 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
       clear_disk_cache();
     }
 
-    long begin = get_high_precision_time();
+    long begin = get_high_precision_real_time();
     ssize_t result = pread(in_fd, &buf[0], sizeof(buf), offset);
-    long end = get_high_precision_time();
+    long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
     assert(run_time > 0);
@@ -137,9 +135,9 @@ void run_ext4_benchmark(string file_name, int file_size) {
 
     printf("Ext4 Benchmark: Trial %i\n", i+1);
 
-    long begin = get_high_precision_time();
+    long begin = get_high_precision_real_time();
     ssize_t result = pread(in_fd, &buf[0], sizeof(buf), offset);
-    long end = get_high_precision_time();
+    long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
     assert(run_time > 0);
