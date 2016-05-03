@@ -21,7 +21,7 @@
 
 #define ANTI_CACHE_INVOCATION_INTERVAL 10 * 1 * 1000  // in microseconds.
 
-#define ANTI_CACHE_EVICTION_THRESHOLD 4 * 1000 * 1000  // in units of 4 KB.  
+#define ANTI_CACHE_EVICTION_THRESHOLD 1 * 10 * 1024  // in units of 4 KB.  
 
 #define ANTI_CACHE_BULK_EVICTION_ENABLED 1
 

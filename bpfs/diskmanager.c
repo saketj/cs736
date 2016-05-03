@@ -3,6 +3,8 @@
 #include "debug_print.h"
 
 #include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -12,8 +14,22 @@
 #include <string.h>
 #include <assert.h>
 
+#define SM_SIZE 8
+#define SM_KEY 5678
+
+static char *shm;
+
 // Not open and close file every time. This will cause the file to flush
 // Have a way of moving multiple blocks to and fro disk
+
+const char *DISK_CACHE_CLEAR_CMD = "sync ; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'";
+void clear_disk_cache() {
+  int i = system(DISK_CACHE_CLEAR_CMD);
+  if (i != 0) {
+    printf("Disk cache clear command failed with status %d\n", i);
+  }
+}
+
 
 void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 	//Dprintf(
@@ -24,6 +40,26 @@ void initializeDiskManager(char *fileName, uint64_t size, uint64_t blockSize) {
 	totalBlockCount = fileSize / blockSize;
 	diskManagerBlockSize = blockSize;
 	prefetch_hash_map = lru_hash_map_init();
+
+	// Initialize shared memory.
+	int shmid;
+  key_t key = SM_KEY;
+
+  // Create the segment.
+  if ((shmid = shmget(key, SM_SIZE	, IPC_CREAT | 0666)) < 0) {
+    perror("shmget");
+    exit(1);
+  }
+
+	// Now we attach the segment to our data space.
+	if ((shm = shmat(shmid, NULL, 0)) == (char *) -1) {
+    perror("shmat");
+    exit(1);
+  }
+
+	// Set sync to false.
+	*shm = '0';
+
 	//Dprintf("Completed Initializing Disk Manager\n");
 
 }
@@ -34,6 +70,10 @@ int readBlocksWithPrefetch(uint64_t blockNumber, char *buf) {
 
 	//Dprintf("Inside Disk Manager readBlockswithprefetch for blockNumber: %ld\n",
 		//	blockNumber);
+	if (*shm != '0') {
+		clear_disk_cache();
+	}
+
 	if (buf == NULL)
 		return -1;
 	// if block has not been prefetched

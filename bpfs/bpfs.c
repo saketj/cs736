@@ -3727,7 +3727,7 @@ int main(int argc, char **argv) {
 	char **fargv;
 	int r = -1;
 
-	initializeDiskManager("/tmp/1", DISK_SIZE, DISK_BLOCK_SIZE);
+	initializeDiskManager("disk-out-1", DISK_SIZE, DISK_BLOCK_SIZE);
 
 	xassert(!hash_map_init());
 	//TODO (Siddharth Suresh) - Disk Manager
@@ -3785,7 +3785,7 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 
-	char *filename = "/tmp/1";
+	char *filename = "disk-out-1";
 	unlink(filename);
 	int fd = open(filename, O_WRONLY | O_TRUNC | O_CREAT,
 	S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);

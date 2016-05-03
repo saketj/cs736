@@ -33,6 +33,7 @@
 postmark-1_5
 httpd-*
 linux-*
+disk-out-*
 
 ### CMake ###
 CMakeCache.txt

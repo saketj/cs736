@@ -9,11 +9,20 @@
 
 #include <assert.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <unistd.h>
 
 #include "high_precision_timer.h"
 
 using namespace std;
+
+#define SM_SIZE 8
+#define SM_KEY 5678
+
+static char *shm;
+
 
 /*
   g++ -lrt -std=c++11 hot_cold_microbench.cpp
@@ -50,6 +59,25 @@ int main(int argc, char **argv) {
   if (fs_type.compare("bpfs") == 0) {
     int anti_cache_size = stoi(argv[4]);
     int hotness_factor = stoi(argv[5]);
+    // Initialize shared memory.
+    int shmid;
+    key_t key = SM_KEY;
+    /*
+     * Locate the segment.
+     */
+    if ((shmid = shmget(key, SM_SIZE, 0666)) < 0) {
+        perror("shmget");
+        exit(1);
+    }
+
+    /*
+     * Now we attach the segment to our data space.
+     */
+    if ((shm = (char *)shmat(shmid, NULL, 0)) == (char *) -1) {
+        perror("shmat");
+        exit(1);
+    }
+
     run_bpfs_benchmark(file_name, file_size, anti_cache_size, hotness_factor);
   } else if (fs_type.compare("ext4") == 0) {
     run_ext4_benchmark(file_name, file_size);
@@ -78,8 +106,13 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
   cout<<"Anti-cache has been warmed-up with hot data.\n";
 
   long cumm_time = 0;
+  long num_disk_reads = 0;
+  long num_bpfs_reads = 0;
 
-  for (int i = 0; i < NUM_TRIALS; ++i) {
+  // Enable sync on bpfs diskmanager.
+  *shm = '1';
+
+  for (int i = 0; i < NUM_TRIALS;) {
     printf("BPFS Benchmark: Trial %i\n", i+1);
 
     int offset;
@@ -94,6 +127,7 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
           break;
         }
       }
+      ++num_bpfs_reads;
     } else {
       // Read from disk.
       while(1) {
@@ -106,6 +140,7 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
         }
       }
       clear_disk_cache();
+      ++num_disk_reads;
     }
 
     long begin = get_high_precision_real_time();
@@ -113,13 +148,19 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
     long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
-    assert(run_time > 0);
-    cumm_time += (run_time);
+    if (run_time > 0) {
+      cumm_time += (run_time);
+      ++i;
+    }
   }
 
   double cumm_time_in_ms = (double) cumm_time / (double) (1000000);
 
   printf("BPFS benchmark time: %f milliseconds.\n", cumm_time_in_ms);
+  printf("Hotness = %d percent, num_bpfs_reads = %ld, num_disk_reads = %ld\n", hotness_factor, num_bpfs_reads, num_disk_reads);
+
+  // Disable sync for bpfs diskmanager.
+  *shm = '0';
 }
 
 void run_ext4_benchmark(string file_name, int file_size) {
@@ -129,7 +170,7 @@ void run_ext4_benchmark(string file_name, int file_size) {
 
   long cumm_time = 0;
 
-  for (int i = 0; i < NUM_TRIALS; ++i) {
+  for (int i = 0; i < NUM_TRIALS;) {
     off_t offset = rand() % offset_max;
     clear_disk_cache();
 
@@ -140,8 +181,10 @@ void run_ext4_benchmark(string file_name, int file_size) {
     long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
-    assert(run_time > 0);
-    cumm_time += (run_time);
+    if (run_time > 0) {
+      cumm_time += (run_time);
+      ++i;
+    }
   }
 
   double cumm_time_in_ms = (double) cumm_time / (double) (1000000);
