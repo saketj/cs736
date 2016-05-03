@@ -29,7 +29,7 @@ using namespace std;
 const char *DISK_CACHE_CLEAR_CMD = "sync ; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'";
 long BLOCK_READ_SIZE = 4096;
 const int BPFS_BLOCK_SIZE = 4096;
-const int NUM_TRIALS = 100;
+const int NUM_TRIALS = 10;
 
 void run_bpfs_benchmark(string file_name, long file_size);
 void run_ext4_benchmark(string file_name, long file_size);
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 
 void run_bpfs_benchmark(string file_name, long file_size) {
   char buf[BLOCK_READ_SIZE];
-  int in_fd = open(file_name.c_str(), O_RDONLY);
+  int in_fd = open(file_name.c_str(), O_WRONLY);
   long offset_max = file_size - BLOCK_READ_SIZE;
 
   long cumm_time = 0;
@@ -77,6 +77,7 @@ void run_bpfs_benchmark(string file_name, long file_size) {
 
     long begin = get_high_precision_real_time();
     ssize_t result = pwrite(in_fd, &buf[0], sizeof(buf), offset);
+    fsync(in_fd);
     long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
@@ -89,11 +90,12 @@ void run_bpfs_benchmark(string file_name, long file_size) {
   double avg_time_in_ms = (double) avg_time / (double) (1000000);
 
   printf("BPFS benchmark time: %f milliseconds.\n", avg_time_in_ms);
+  close(in_fd);
 }
 
 void run_ext4_benchmark(string file_name, long file_size) {
   char buf[BLOCK_READ_SIZE];
-  int in_fd = open(file_name.c_str(), O_RDONLY);
+  int in_fd = open(file_name.c_str(), O_WRONLY);
   long offset_max = file_size - BLOCK_READ_SIZE;
 
   long cumm_time = 0;
@@ -106,6 +108,7 @@ void run_ext4_benchmark(string file_name, long file_size) {
 
     long begin = get_high_precision_real_time();
     ssize_t result = pwrite(in_fd, &buf[0], sizeof(buf), offset);
+    fsync(in_fd);
     long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
@@ -118,4 +121,5 @@ void run_ext4_benchmark(string file_name, long file_size) {
   double avg_time_in_ms = (double) avg_time / (double) (1000000);
 
   printf("Ext4 benchmark time: %f milliseconds.\n", avg_time_in_ms);
+  close(in_fd);
 }

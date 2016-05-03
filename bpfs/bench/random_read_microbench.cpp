@@ -29,7 +29,7 @@ using namespace std;
 const char *DISK_CACHE_CLEAR_CMD = "sync ; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'";
 long BLOCK_READ_SIZE = 4096;
 const int BPFS_BLOCK_SIZE = 4096;
-const int NUM_TRIALS = 100;
+const int NUM_TRIALS = 10;
 
 void run_bpfs_benchmark(string file_name, long file_size);
 void run_ext4_benchmark(string file_name, long file_size);
