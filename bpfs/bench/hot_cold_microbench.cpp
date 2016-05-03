@@ -79,7 +79,7 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
 
   long cumm_time = 0;
 
-  for (int i = 0; i < NUM_TRIALS; ++i) {
+  for (int i = 0; i < NUM_TRIALS;) {
     printf("BPFS Benchmark: Trial %i\n", i+1);
 
     int offset;
@@ -113,8 +113,10 @@ void run_bpfs_benchmark(string file_name, int file_size, int anti_cache_size, in
     long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
-    assert(run_time > 0);
-    cumm_time += (run_time);
+    if(run_time > 0) {
+      ++i;
+      cumm_time += (run_time);
+    }
   }
 
   double cumm_time_in_ms = (double) cumm_time / (double) (1000000);
@@ -129,7 +131,7 @@ void run_ext4_benchmark(string file_name, int file_size) {
 
   long cumm_time = 0;
 
-  for (int i = 0; i < NUM_TRIALS; ++i) {
+  for (int i = 0; i < NUM_TRIALS;) {
     off_t offset = rand() % offset_max;
     clear_disk_cache();
 
@@ -140,8 +142,10 @@ void run_ext4_benchmark(string file_name, int file_size) {
     long end = get_high_precision_real_time();
 
     long run_time = (end - begin);
-    assert(run_time > 0);
-    cumm_time += (run_time);
+    if(run_time > 0) {
+      ++i;
+      cumm_time += (run_time);
+    }
   }
 
   double cumm_time_in_ms = (double) cumm_time / (double) (1000000);
