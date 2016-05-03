@@ -14,6 +14,7 @@ For the purpose of the evaluation, we run our experiments on a real hardware wit
 \subsection{Experimental evaluations}
 In this section we present the experimental evaluations of this file system using differnt micro and macro benchmarks and throughput evalations and offer comparisons with those of BPFS and ext4 file-systems. 
 
+
 \subsubsection{Microbenchmark: Various File Operations}
 In order to ensure the correctness of various file operations and to measure cost of additional overheads due to added behaviors such as anti-caching, we benchmarked 40 different file operations. We used 'timeit' package in Python programming language to measure the time for these operations. Table 5.1 shows a representative sample of those operations for both AC\-BPFS and BPFS. The table shows that for the file operations the added overhead is negligible, if any at all. We also performed similar benchmarks for all the file operations in the ext4 file system. Since the time taken for each of the file operations were in the order of one tenth of a millisecond without fsync and in the order of 10 milliseconds with fync enabled, the benchmarks for the operations in the ext4 file systems are not shown in the table.
 
@@ -43,27 +44,54 @@ This synthetic benchmark is used to demonstrate the effect of storing hot data i
 
 The figure shows that when the caching threshold is 100\% of the workload size (i.e. all the operations happen in the persistent memory), the performance of AC\-BPFS is identical to that of BPFS, as we expected. As we decrease the caching threshold, the performance suffers accordingly. On all times, the performance of the AC\-BPFS is better than that of ext4 in orders of magnitude.
 
+
+\begin{figure}
+\centering
+\vspace{-0.2in}
+\includegraphics[width=0.5\textwidth]{figs/append.png}
+\vspace{-0.2in}
+\mycaption{fig-append}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system. XXX}
+\end{figure}
+
  
 
+\begin{table}[!t]
+%\vspace{0.1in}
+\begin{center}
+{\footnotesize
+\begin{tabular}{c|c|l}
+\textbf{Operations} & \textbf{Anti Cache BPFS(ms)} & \textbf{BPFS(ms)} \\
+\hline
+chmod&5.26&5.19 \\
+create&6.49&6.45 \\
+link&6.21&6.24 \\
+mkdir&6.61&6.55 \\
+read&4.67&4.61 \\
+readdir&3.24&3.1 \\
+rename\_dir\_intra&8.3&7.61 \\
+rename\_file\_inter&8.6&7.82 \\
+rmdir&6.66&5.95 \\
+symlink&6.58&6.46 \\
+unlink\_16M&10.03&10.42 \\
+unlink\_hardlink&5.5&5.5 \\
+write\_1M\_4k&6.91&6.22 \\
 
-\begin{tabular}{ |p{3cm}||p{3cm}|p{3cm}|p{3cm}|  }
- \hline
- \multicolumn{4}{|c|}{Country List} \\
- \hline
- Country Name     or Area Name& ISO ALPHA 2 Code &ISO ALPHA 3 Code&ISO numeric Code\\
- \hline
- Afghanistan   & AF    &AFG&   004\\
- Aland Islands&   AX  & ALA   &248\\
- Albania &AL & ALB&  008\\
- Algeria    &DZ & DZA&  012\\
- American Samoa&   AS  & ASM&016\\
- Andorra& AD  & AND   &020\\
- Angola& AO  & AGO&024\\
- \hline
 \end{tabular}
+}
+\end{center}
+\vspace{-0.1in}
+\mycaption{tbl-micro}{Microbenchmark}{\footnotesize The table
+shows XXXX
+}
+\end{table}
 
-
-
+\begin{figure}
+\centering
+\vspace{-0.2in}
+\includegraphics[width=0.5\textwidth]{figs/write.png}
+\vspace{-0.2in}
+\mycaption{fig-write}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system. XXX}
+\end{figure}
 
 
 \begin{figure}
@@ -75,7 +103,7 @@ The figure shows that when the caching threshold is 100\% of the workload size (
 \end{figure}
 
 
-\subsubsection{Macrobenchmarks}
+
 
 \begin{figure}
 \centering
@@ -83,4 +111,12 @@ The figure shows that when the caching threshold is 100\% of the workload size (
 \includegraphics[width=0.5\textwidth]{figs/filebench.png}
 \vspace{-0.2in}
 \mycaption{fig-filebench}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system. XXX}
+\end{figure}
+
+\begin{figure}
+\centering
+\vspace{-0.2in}
+\includegraphics[width=0.5\textwidth]{figs/bench2.pdf}
+\vspace{-0.2in}
+\mycaption{fig-fb2}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system. XXX}
 \end{figure}
