@@ -1,0 +1,128 @@
+\RequireVersions{
+  *{application}{TeX}     {1990/03/25 v3.x}
+  *{format} {LaTeX2e}     {2011/06/27 v2.e}
+  *{package}{snapshot}    {2002/03/05 v1.14}
+  *{class}  {z2-article}  {1999/01/07 v1.4a}
+  *{file}   {size10.clo}  {2007/10/19 v1.4h}
+  *{package}{times}       {2005/04/12 v9.2a}
+  *{package}{oneinchmargins}{0000/00/00 v0.0}
+  *{package}{setspace}    {2011/12/19 v6.7a}
+  *{package}{graphicx}    {1999/02/16 v1.0f}
+  *{package}{keyval}      {1999/03/16 v1.13}
+  *{package}{graphics}    {2009/02/05 v1.0o}
+  *{package}{trig}        {1999/03/16 v1.09}
+  *{file}   {graphics.cfg}{2010/04/23 v1.9}
+  *{file}   {pdftex.def}  {2011/05/27 v0.06d}
+  *{package}{infwarerr}   {2010/04/08 v1.3}
+  *{package}{ltxcmds}     {2011/11/09 v1.22}
+  *{package}{multirow}    {0000/00/00 v0.0}
+  *{package}{amssymb}     {2013/01/14 v3.01}
+  *{package}{amsfonts}    {2013/01/14 v3.01}
+  *{package}{alltt}       {1997/06/16 v2.0g}
+  *{package}{url}         {2013/09/16 v3.4}
+  *{package}{listings}    {2013/08/26 v1.5b}
+  *{package}{lstmisc}     {2013/08/26 v1.5b}
+  *{file}   {listings.cfg}{2013/08/26 v1.5b}
+  *{package}{cite}        {2010/09/10 v5.3}
+  *{package}{hyperref}    {2012/11/06 v6.83m}
+  *{package}{hobsub-hyperref}{2012/05/28 v1.13}
+  *{package}{hobsub-generic}{2012/05/28 v1.13}
+  *{package}{hobsub}      {2012/05/28 v1.13}
+  *{package}{ifluatex}    {2010/03/01 v1.3}
+  *{package}{ifvtex}      {2010/03/01 v1.5}
+  *{package}{intcalc}     {2007/09/27 v1.1}
+  *{package}{ifpdf}       {2011/01/30 v2.3}
+  *{package}{etexcmds}    {2011/02/16 v1.5}
+  *{package}{kvsetkeys}   {2012/04/25 v1.16}
+  *{package}{kvdefinekeys}{2011/04/07 v1.3}
+  *{package}{pdftexcmds}  {2011/11/29 v0.20}
+  *{package}{pdfescape}   {2011/11/25 v1.13}
+  *{package}{bigintcalc}  {2012/04/08 v1.3}
+  *{package}{bitset}      {2011/01/30 v1.1}
+  *{package}{uniquecounter}{2011/01/30 v1.2}
+  *{package}{letltxmacro} {2010/09/02 v1.4}
+  *{package}{hopatch}     {2012/05/28 v1.2}
+  *{package}{xcolor-patch}{2011/01/30 v0.0}
+  *{package}{atveryend}   {2011/06/30 v1.8}
+  *{package}{atbegshi}    {2011/10/05 v1.16}
+  *{package}{refcount}    {2011/10/16 v3.4}
+  *{package}{hycolor}     {2011/01/30 v1.7}
+  *{package}{ifxetex}     {2010/09/12 v0.6}
+  *{package}{auxhook}     {2011/03/04 v1.3}
+  *{package}{kvoptions}   {2011/06/30 v3.11}
+  *{file}   {pd1enc.def}  {2012/11/06 v6.83m}
+  *{file}   {hyperref.cfg}{2002/06/06 v1.2}
+  *{file}   {hpdftex.def} {2012/11/06 v6.83m}
+  *{package}{rerunfilecheck}{2011/04/15 v1.7}
+  *{package}{breakurl}    {2013/04/10 v1.40}
+  *{package}{xkeyval}     {2012/10/14 v2.6b}
+  *{file}   {xkeyval.tex} {2012/10/14 v2.6b}
+  *{package}{fancyvrb}    {2008/02/07 v0.0}
+  *{package}{relsize}     {2013/03/29 v4.1}
+  *{package}{soul}        {2003/11/17 v2.4}
+  *{package}{array}       {2008/09/09 v2.4c}
+  *{package}{subcaption}  {2013/02/03 v1.1-62}
+  *{package}{caption}     {2013/05/02 v3.3-89}
+  *{package}{caption3}    {2013/05/02 v1.6-88}
+  *{package}{booktabs}    {2005/04/14 v1.61803}
+  *{package}{enumitem}    {2011/09/28 v3.5.2}
+  *{package}{currfile}    {2013/02/01 v0.7b}
+  *{package}{filehook}    {2011/10/12 v0.5d}
+  *{package}{xcolor}      {2007/01/21 v2.11}
+  *{file}   {color.cfg}   {2007/01/18 v1.5}
+  *{package}{colortbl}    {2012/02/13 v1.0a}
+  *{file}   {dvipsnam.def}{1999/02/16 v3.0i}
+  *{file}   {svgnam.def}  {2007/01/21 v2.11}
+  *{package}{tikz}        {2010/10/13 v2.10}
+  *{package}{pgf}         {2008/01/15 v2.10}
+  *{package}{pgfrcs}      {2010/10/25 v2.10}
+  *{package}{everyshi}    {2001/05/15 v3.00}
+  *{file}   {pgfrcs.code.tex}{0000/00/00 v0.0}
+  *{package}{pgfcore}     {2010/04/11 v2.10}
+  *{package}{pgfsys}      {2010/06/30 v2.10}
+  *{file}   {pgfsys.code.tex}{0000/00/00 v0.0}
+  *{file}   {pgfsyssoftpath.code.tex}{2008/07/18 v1.7)}
+  *{file}   {pgfsysprotocol.code.tex}{2006/10/16 v1.4)}
+  *{file}   {pgfcore.code.tex}{0000/00/00 v0.0}
+  *{package}{pgfcomp-version-0-65}{2007/07/03 v2.10}
+  *{package}{pgfcomp-version-1-18}{2007/07/23 v2.10}
+  *{package}{pgffor}      {2010/03/23 v2.10}
+  *{package}{pgfkeys}     {0000/00/00 v0.0}
+  *{file}   {pgfkeys.code.tex}{0000/00/00 v0.0}
+  *{file}   {pgffor.code.tex}{0000/00/00 v0.0}
+  *{file}   {tikz.code.tex}{0000/00/00 v0.0}
+  *{package}{pbox}        {2011/12/07 v1.2}
+  *{package}{calc}        {2007/08/22 v4.3}
+  *{package}{ifthen}      {2001/05/26 v1.1c}
+  *{package}{xstring}     {2013/10/13 v1.7c}
+  *{package}{xspace}      {2009/10/20 v1.13}
+  *{package}{epstopdf}    {2010/02/09 v2.5}
+  *{package}{epstopdf-base}{2010/02/09 v2.5}
+  *{package}{grfext}      {2010/08/19 v1.1}
+  *{file}   {epstopdf-sys.cfg}{2010/07/13 v1.3}
+  *{file}   {ot1ptm.fd}   {2001/06/04 v1/ptm.}
+  *{file}   {supp-pdf.mkii}{0000/00/00 v0.0}
+  *{package}{nameref}     {2012/10/27 v2.43}
+  *{package}{gettitlestring}{2010/12/03 v1.4}
+  *{file}   {main.out}    {0000/00/00 v0.0}
+  *{file}   {main.out}    {0000/00/00 v0.0}
+  *{file}   {macros.tex}  {0000/00/00 v0.0}
+  *{file}   {title.tex}   {0000/00/00 v0.0}
+  *{file}   {umsa.fd}     {2013/01/14 v3.01}
+  *{file}   {umsb.fd}     {2013/01/14 v3.01}
+  *{file}   {ot1pcr.fd}   {2001/06/04 v1/pcr.}
+  *{file}   {abstract.tex}{0000/00/00 v0.0}
+  *{file}   {intro.tex}   {0000/00/00 v0.0}
+  *{file}   {background.tex}{0000/00/00 v0.0}
+  *{file}   {design.tex}  {0000/00/00 v0.0}
+  *{file}   {figs/bpfs.pdf}{0000/00/00 v0.0}
+  *{file}   {impl.tex}    {0000/00/00 v0.0}
+  *{file}   {eval.tex}    {0000/00/00 v0.0}
+  *{file}   {omsptm.fd}   {0000/00/00 v0.0}
+  *{file}   {figs/append.pdf}{0000/00/00 v0.0}
+  *{file}   {figs/coldness.png}{0000/00/00 v0.0}
+  *{file}   {figs/filebench.png}{0000/00/00 v0.0}
+  *{file}   {related.tex} {0000/00/00 v0.0}
+  *{file}   {conc.tex}    {0000/00/00 v0.0}
+  *{file}   {bib.tex}     {0000/00/00 v0.0}
+}
