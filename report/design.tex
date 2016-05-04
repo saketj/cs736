@@ -1,4 +1,4 @@
-\section{Design}
+\section{Design and Implementation}
 \label{sec-design}
 
 \begin{figure}
@@ -19,7 +19,7 @@
 
 
 \subsection{Anti-Cache Manager}
-Non Volatile Memory (NVM) is the primary data store and it also contains the more frequently accessed blocks, which is referred to as hot data. But since the capacity of the persistent NVM is limited, we have used the concept of Anti-Caching [Refer Paper here] to periodically evict blocks from the NVM to the disk periodically based on an eviction policy. The eviction policy thus used in this design is the Least Recently Used (LRU) policy. The Anti-Cache Manager keeps track of all the blocks that are written to the NVM and periodically evicts blocks when the number of blocks in the NVM exceeds a pre-determined threshold, which is used to ensure that the NVM is always available from writing blocks, which has helped us drastically reduce our write latency for blocks.
+Non Volatile Memory (NVM) is the primary data store and it also contains the more frequently accessed blocks, which is referred to as hot data. But since the capacity of the persistent NVM is limited, we have used the concept of Anti-Caching to periodically evict blocks from the NVM to the disk periodically based on an eviction policy. The eviction policy thus used in this design is the Least Recently Used (LRU) policy. The Anti-Cache Manager keeps track of all the blocks that are written to the NVM and periodically evicts blocks when the number of blocks in the NVM exceeds a pre-determined threshold, which is used to ensure that the NVM is always available from writing blocks, which has helped us drastically reduce our write latency for blocks.
 
 In order to achieve this, the anti-cache manager runs as a separate background thread which continuously probes the NVM and performs silent eviction. In order to ensure that data blocks that are currently being evicted to disk do not get updated by the file system, a block level locking mechanism is used which implicitly prevents any updates to the block currently being evicted. The performance impact of the locking was found to be negligibe in the FileServer and Varmail macro benchmarks. 
 
