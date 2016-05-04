@@ -1,5 +1,7 @@
 \section{Design and Implementation}
 \label{sec-design}
+\subsection{Anti-Cache Manager}
+Non Volatile Memory (NVM) is the primary data store and it also contains the more frequently accessed blocks, which is referred to as hot data. But since the capacity of the persistent NVM is limited, we have used the concept of Anti-Caching to periodically evict blocks from the NVM to the disk periodically based on an eviction policy. The eviction policy thus used in this design is the Least Recently Used (LRU) policy. The Anti-Cache Manager keeps track of all the blocks that are written to the NVM and periodically evicts blocks when the number of blocks in the NVM exceeds a pre-determined threshold, which is used to ensure that the NVM is always available from writing blocks, which has helped us drastically reduce our write latency for blocks.
 
 \begin{figure}
 \centering
@@ -9,6 +11,13 @@
 \mycaption{fig-bpfs}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system. XXX}
 \end{figure}
 
+In order to achieve this, the anti-cache manager runs as a separate background thread which continuously probes the NVM and performs silent eviction. In order to ensure that data blocks that are currently being evicted to disk do not get updated by the file system, a block level locking mechanism is used which implicitly prevents any updates to the block currently being evicted. The performance impact of the locking was found to be negligibe in the FileServer and Varmail macro benchmarks. 
+
+\subsection{Disk Manager}
+The Disk Manager component simulates a virtual disk through of a file stored on disk in the BPFS partition of predetermined size. It exposes APIs for reading and writing blocks into the disk individually and in bulk. It performs prefetching of additional blocks when a read is performed. The liefetime of the prefetched blocks in memory is predetermined to ensure that unused prefetched blocks are cleaned up regularly with the help of a background thread. To avoid fragmentation, a free list of blocks that have been freed is maintained. Since the disk manager writes blocks into a file, the buffer cache is used to buffer writes until all the blocks are written into the file. Our current implementation provides consistency at the expense of performance by notifying BPFS after persisting the blocks, which inturn updates the indirect pointer in the inodes to point to the new blocks thorugh a blocking call.
+
+The disk manager also exposes another write API to the Anti-Cache Manager to facilitate writing one block at a time, for faster random writes since any free block on disk can be used for writing and does not require sequential locality. To furher improve performance in the case of bulk eviction of blocks from the anti-cache manager, the disk manager performs an explicit flush only after writing all the blocks on to the disk.
+
 \begin{figure}
 \centering
 \vspace{-0.2in}
@@ -17,19 +26,7 @@
 \mycaption{fig-bpfstree}{BPFS tree}{\footnotesize The figure shows the overall design of our system. XXX}
 \end{figure}
 
-
-\subsection{Anti-Cache Manager}
-Non Volatile Memory (NVM) is the primary data store and it also contains the more frequently accessed blocks, which is referred to as hot data. But since the capacity of the persistent NVM is limited, we have used the concept of Anti-Caching to periodically evict blocks from the NVM to the disk periodically based on an eviction policy. The eviction policy thus used in this design is the Least Recently Used (LRU) policy. The Anti-Cache Manager keeps track of all the blocks that are written to the NVM and periodically evicts blocks when the number of blocks in the NVM exceeds a pre-determined threshold, which is used to ensure that the NVM is always available from writing blocks, which has helped us drastically reduce our write latency for blocks.
-
-In order to achieve this, the anti-cache manager runs as a separate background thread which continuously probes the NVM and performs silent eviction. In order to ensure that data blocks that are currently being evicted to disk do not get updated by the file system, a block level locking mechanism is used which implicitly prevents any updates to the block currently being evicted. The performance impact of the locking was found to be negligibe in the FileServer and Varmail macro benchmarks. 
-
-\subsection{Disk Manager}
-The Disk Manager component simulates a virtual disk through of a file stored on disk in the BPFS partition of predetermined size. It exposes APIs for reading and writing blocks into the disk individually and in bulk. It performs prefetching of additional blocks when a read is performed. The liefetime of the prefetched blocks in memory is predetermined to ensure that unused prefetched blocks are cleaned up regularly with the help of a background thread. To avoid fragmentation, a free list of blocks that have been freed is maintained. Since the disk manager writes blocks into a file, the buffer cache is used to buffer writes until all the blocks are written into the file. Our current implementation provides consistency at the expense of performance by notifying BPFS after persisting the blocks, which inturn updates the indirect pointer in the inodes to point to the new blocks thorugh a blocking call.
-
-The disk manager also exposes another write API to the Anti-Cache Manager to facilitate writing one block at a time, for faster random writes since any free block on disk can be used for writing and does not require sequential locality. To furher improve performance in the case of bulk eviction of blocks from the anti-cache manager, the disk manager performs an explicit flush only after writing all the blocks on to the disk.
-
 \subsection{File System Operations}
-
 \subsubsection{Read}
 When a read operation is performed on a file, the BPFS crawls the inode tree to the indirect block containing the pointer to the data block, identifies the location of the data block using the MSB which indicates whether the block is on disk or in NVM, then fetches the block into memory and asynchronously writes it back into NVM. Once the block is persisted in NVM, it frees the block on disk and updates the indirect pointer in the inode tree to point to the new block location in NVM atomically.
 
@@ -40,4 +37,3 @@ When a write operation is performed on a file, the BPFS traverses the inode tree
 
 \subsubsection{Open}
 When a file is opened, the directory inode tree is parsed to find the file. If the file is not found and a create is requested, a new new inode nunber is generated and the new inode is written to the inode file. Then the directory file is then updated. All these updates are performed in place. Since the metadata updates are in-place and in NVM, they are faster than usual disk writes and the additional overhead of metadata journaling can also be avoided by avoiding disk writes.
-
