@@ -63,6 +63,16 @@ write\_1M\_4k&6.91&6.22 \\
 \label{fig:fig}
 \end{figure*}
 
+
+\begin{figure}
+\centering
+\vspace{-0.1in}
+\includegraphics[width=0.5\textwidth]{figs/coldness.png}
+\vspace{-0.1in}
+\mycaption{fig-coldness}{Impact of Degree of Coldness on Read Latency}{\footnotesize This figure shows the block read latency for various degrees of coldness}
+\end{figure}
+
+
 \subsubsection{Microbenchmark: Random write}
 . We evaluated the performance of making random write operations for various data size for AC\_BPFS, BPFS and ext4. For the AC\-BPFS, to ensure uniform distribution of write operations to data blocks in both the persistent memory and the disk, we pre-generated a list of files of various sizes and random offsets with in those files. We ensured that data chucks written at random offsets exceeded the pre-specified cache threshold to force seek from the disk. We called 'fsync' after every write call to force the data to disk so as to make even comparisons across the filesystems. We used UNIX 'clock\_gettime' system call to measure the time for this benchmark.
 
@@ -77,22 +87,15 @@ As with random write, Figure~\ref{fig-append}  shows that both AC\-BPFS and BPFS
 
 
 \subsubsection{Microbenchmark: Degree of coldness}
-This microbenchmark demonstrates the effect of the anti-caching and plots the read latency of reading 400 KB data against the degree of coldness. For the benchmark, we read a 400 KB chunk of data, part of which can be hot/cold depending on the degree of coldness. A 20\% coldness factor on the X-axis for a 400 KB chunk data size would mean that 80 KB of the 'cold' data resides in the disk, while 320 KB of 'hot' data resides in NVM. So as expected, the read latency for a 20\% cold data would be less than the read latency for a 80\% cold data. At a 100\% level, the performance will flat-line with the ext4 performance. \\
-To implement this benchmark, we create 10 files of 40 KB each and we fix our anti-cache size to be 40 KB, so that at any given point only 1 file can reside in NVM. Then a workload is created, which simulates the reading of certain number of files in the NVM vs the files in the disk, based on the degree of coldness. 
-As it is evident Figure~\ref{fig-coldness}, at 0\% coldness our performance is exactly what you would expect from BPFS, while at 100\% coldness it slightly overshoots the ext4 performance. This is understandable given the overhead for us, in terms of anti-caching daemon. However, the most interesting part of this graph is that the trend as one increases the degree of coldness. The less the degree of coldness, the more is the performance. This clearly proves the benefit of our anti-caching implementation for a tiered storage.
+This microbenchmark demonstrates the effect of the anti-caching and plots the read latency of reading 400 KB data against the degree of coldness. For the benchmark, we read a 400 KB chunk of data, part of which can be hot/cold depending on the degree of coldness. A 20\% coldness factor on the X-axis for a 400 KB chunk data size would mean that 80 KB of the 'cold' data resides in the disk, while 320 KB of 'hot' data resides in NVM. So as expected, the read latency for a 20\% cold data would be less than the read latency for a 80\% cold data.\\
 
+ At a 100\% level, the performance will flat-line with the ext4 performance. To implement this benchmark, we create 10 files of 40 KB each and we fix our anti-cache size to be 40 KB, so that at any given point only 1 file can reside in NVM. Then a workload is created, which simulates the reading of certain number of files in the NVM vs the files in the disk, based on the degree of coldness. As it is evident Figure~\ref{fig-coldness}, at 0\% coldness our performance is exactly what you would expect from BPFS, while at 100\% coldness it slightly overshoots the ext4 performance. \\
 
-\begin{figure}
-\centering
-\vspace{-0.1in}
-\includegraphics[width=0.5\textwidth]{figs/coldness.png}
-\vspace{-0.1in}
-\mycaption{fig-coldness}{Impact of Degree of Coldness on Read Latency}{\footnotesize This figure shows the block read latency for various degrees of coldness}
-\end{figure}
+This is understandable given the overhead for us, in terms of anti-caching daemon. However, the most interesting part of this graph is that the trend as one increases the degree of coldness. The less the degree of coldness, the more is the performance. This clearly proves the benefit of our anti-caching implementation for a tiered storage.
 
  
 \subsubsection{Macrobenchmark: File Bench}
- For this benchmark, we used FileBench to test and compare the performance of the three files systems by generating a large variety of workloads {cite} of size 1.25 GB. The workload is comprised of 33\% read requests and 67\% write requests. For the AC\-BPFS, we ran the benchmark by varying the (anti) caching thresholds – from 20\% of the workload size to 100\% of the workload size. We did so in order to get insights on the effectiveness and overheads of the anti-caching mechanisms in addition to making comparison of the AC\-BPFS with BPFS and ext4 file systems.
+For this benchmark, we used FileBench to test and compare the performance of the three files systems by generating a large variety of workloads {cite} of size 1.25 GB. The workload is comprised of 33\% read requests and 67\% write requests. For the AC\-BPFS, we ran the benchmark by varying the (anti) caching thresholds – from 20\% of the workload size to 100\% of the workload size. We did so in order to get insights on the effectiveness and overheads of the anti-caching mechanisms in addition to making comparison of the AC\-BPFS with BPFS and ext4 file systems.
 
 
  \begin{figure*}[t]\centering
