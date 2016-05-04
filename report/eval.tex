@@ -67,7 +67,7 @@ shows XXXX
 \subsubsection{Microbenchmark: Random write}
 . We evaluated the performance of making random write operations for various data size for AC\_BPFS, BPFS and ext4. For the AC\-BPFS, to ensure uniform distribution of write operations to data blocks in both the persistent memory and the disk, we pre-generated a list of files of various sizes and random offsets with in those files. We ensured that data chucks written at random offsets exceeded the pre-specified cache threshold to force seek from the disk. We called 'fsync' after every write call to force the data to disk so as to make even comparisons across the filesystems. We used UNIX 'clock\_gettime' system call to measure the time for this benchmark.
 
-Figure 5.1 (a) shows the results for this micro-benchmark. Both AC\_BPFS and BPFS are faster than the ext4 in orders of magnitude, as we hoped. It also shows that AC\-BFPS, although starts to lag behind the BPFS as the size of the data being written increases, it does not lag significantly, that reinforces our initial intuition and supports our objective.
+Figure~\ref{fig-write} shows the results for this micro-benchmark. Both AC\_BPFS and BPFS are faster than the ext4 in orders of magnitude, as we hoped. It also shows that AC\-BFPS, although starts to lag behind the BPFS as the size of the data being written increases, it does not lag significantly, that reinforces our initial intuition and supports our objective.
 
 
 
