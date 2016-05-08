@@ -3,25 +3,25 @@
 Our goal is to build a file system for a tiered storage hierarchy consisting of disks and NVM that combines the low latency of NVM and low cost of disk-based storage without regressing on performance while offering similar consistency guarantees as BPFS. This seems like a reasonable goal, however, it raises the some non-trivial questions about the overall design of such a tiered filesystem:
 
 \begin{itemize}
-\item How do we make changes to BPFS data structures so that it is able to locate the data in-memory or disk?
-\item Do we handle the disks directly or do we go through another file system to store data on disk?
-\item What is the ideal granularity at which we should move the data?
-\item What policies determine when to move data?
+\item How do we make changes to BPFS data structures so that it is able to locate the data in-memory or disk? \vspace{-0.1in}
+\item Do we handle the disks directly or do we go through another file system to store data on disk? \vspace{-0.1in}
+\item What is the ideal granularity at which we should move the data? \vspace{-0.1in}
+\item What policies determine when to move data? \vspace{-0.1in}
 \end{itemize}
 
 We provide answers to these questions in this section and discuss at length, the policies and mechanisms required to implement the same. Figure~\ref{fig-bpfs} depicts the overall design of our system. We use NVM to store the filesystem metadata and all the filesystem operations are always done within the NVM tier. To preserve the filesystem consistency guarantees, we have opted for a simple design policy where only the data blocks are moved to the disks, while the metadata blocks always reside in the persistent NVM. Such a policy entails that for a given BPFS file, its data may be split across NVM and the disk. However, it is to be noted that even though a data block may be moved between the NVM and the disk, there will always be a single valid copy of that data block- whether in the disk or in the NVM.
 
-The mechanism to determine the exact location of the valid copy of a given data block is through the use of the most significant bit(MSB) of the indirect pointer, pointing to the data block in the BPFS tree structure. This is also being depicted in the Figure~\ref{fig-bpfstree}. If the MSB is not set, then the rest of the 63-bits denote a memory address of the data block within the NVM itself. While on the other hand, if the MSB is set, then the rest of the 63-bits denote a disk address where the data block was moved to on the disk. This answers the first question that we had raised earlier. In the following subsections, we discuss the design and implementation of Anti-Cache Manager and the Disk Manager that provide answers to the rest of the design questions.
+The mechanism to determine the exact location of the valid copy of a given data block is through the use of the most significant bit(MSB) of the indirect pointer, pointing to the data block in the BPFS tree structure. This is also being depicted in the Figure~\ref{fig-bpfs}. If the MSB is not set, then the rest of the 63-bits denote a memory address of the data block within the NVM itself. While on the other hand, if the MSB is set, then the rest of the 63-bits denote a disk address where the data block was moved to on the disk. This answers the first question that we had raised earlier. In the following subsections, we discuss the design and implementation of Anti-Cache Manager and the Disk Manager that provide answers to the rest of the questions.
 
 \subsection{Anti-Cache Manager}
-Non Volatile Memory (NVM) is the primary data store and it also contains the more frequently accessed blocks, which is referred to as hot data. But since the capacity of the persistent NVM is limited, we have used the concept of Anti-Caching to periodically evict blocks from the NVM to the disk periodically based on an eviction policy. The eviction policy thus used in this design is the Least Recently Used (LRU) policy. The Anti-Cache Manager keeps track of all the blocks that are written to the NVM and periodically evicts blocks when the number of blocks in the NVM exceeds a pre-determined threshold, which is used to ensure that the NVM is always available from writing blocks, which has helped us drastically reduce our write latency for blocks.
+Non Volatile Memory (NVM) is the primary data store and it also contains the more frequently accessed blocks, which is referred to as hot data. But since the capacity of the persistent NVM is limited, we have used the concept of Anti-Caching to periodically evict blocks from the NVM to the disk periodically based on an eviction policy. The eviction policy thus used in this design is the Least Recently Used (LRU) policy. The Anti-Cache Manager keeps track of all the blocks that are written to the NVM and periodically evicts blocks when the number of blocks in the NVM exceeds a pre-determined threshold, which is used to ensure that the NVM is always available for writing blocks, which has helped us drastically reduce our write latency for blocks.
 
 \begin{figure}
 \centering
 \vspace{-0.2in}
-\includegraphics[width=0.5\textwidth]{figs/bpfs.pdf}
+\includegraphics[width=0.5\textwidth]{figs/bpfs2.pdf}
 \vspace{-0.2in}
-\mycaption{fig-bpfs}{Design Overview of BPFS}{\footnotesize The figure shows the overall design of our system.}
+\mycaption{fig-bpfstree}{BPFS tree structure}{\footnotesize The figure shows the file system organization of BPFS, along with our proposed modifications.}
 \end{figure}
 
 In order to achieve this, the anti-cache manager runs as a separate background thread that continuously probes the NVM and performs silent eviction. In order to ensure that data blocks that are currently being evicted to disk do not get updated by the file system, a block level locking mechanism is used which implicitly prevents any updates to the block currently being evicted.
@@ -34,9 +34,9 @@ The disk manager also exposes another write API to the Anti-Cache Manager to fac
 \begin{figure}
 \centering
 \vspace{-0.2in}
-\includegraphics[width=0.5\textwidth]{figs/bpfs2.pdf}
+\includegraphics[width=0.5\textwidth]{figs/bpfs.pdf}
 \vspace{-0.2in}
-\mycaption{fig-bpfstree}{BPFS tree structure}{\footnotesize The figure shows the file system organization of our modified BPFS}
+\mycaption{fig-bpfs}{Design Architecture of AC-BPFS}{\footnotesize The figure shows the overall design of our system.}
 \end{figure}
 
 \subsection{File System Operations}
