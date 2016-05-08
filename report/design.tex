@@ -1,11 +1,11 @@
 \section{Design and Implementation}
 \label{sec-design}
-Our goal is to build a file system for a tiered storage hierarchy consisting of disks and NVM that combines the low latency of NVM and low cost of disk-based storage without regressing on performance while offering similar consistency guarantees as BPFS. Our goal is to extend BPFS to build a file system spanning NVM and disks. To build such a file system, here are a set of policies and mechanisms we need to come up with.
+Our goal is to build a file system for a tiered storage hierarchy consisting of disks and NVM that combines the low latency of NVM and low cost of disk-based storage without regressing on performance while offering similar consistency guarantees as BPFS. This seems like a reasonable goal, however, it raises the following questions about the policies and mechanisms that are required to achieve this goal:
 
 \begin{itemize}
-\item A mechanism that supports moving data between persistent memory and disks. How do we make changes to BPFS data structures so that we can locate the data in memory or disk?
-\item Do we handle disks directly or do we go through another file system to store data on disk?
-\item What is the ideal granularity at which we move the data? 
+\item How do we make changes to BPFS data structures so that it is able to locate the data in-memory or disk?
+\item Do we handle the disks directly or do we go through another file system to store data on disk?
+\item What is the ideal granularity at which we should move the data? 
 \item What policies determine when to move data?
 \end{itemize}
 
