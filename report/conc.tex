@@ -1,8 +1,7 @@
 \section{Conclusion}
 \label{sec-conc}
 
-Fast non-volatile memories (NVM) are byte addressable and offer latencies close to DRAM, but incur a higher predicted cost per byte. Combining the low latency of NVM and low cost of disk-based storage without regressing on the performance maximizes the best of the two worlds. In this paper, we present design, implementation and analysis of multi-tiered storage hierarchy consisting of NVRAM and Disk (or Flash) for File Systems, thereby providing a virtual impression of infinite NVM memory as well as the cheap upgrade in the disk performance with the amount of NVM available through the use of anti-caching mechanism.
-
+Future commodity systems could potentially have NVM as an integral part of the storage tier just as in the case of DRAM in current systems, though the capacity of NVM could be limited and may vary drastically. AC-BPFS provides a file system design that scales well and tunes itself according to the capacity of the individual memory devices in the storage tier, but at the same time provides consistency guarantees without replicating data across storage devices and still performs well. The policies used in both anti-cache manager and disk manager can be modified independently depending on the workload characteristics of the system as well.
 
 \section{Future Work}
 \label{sec-conc}
