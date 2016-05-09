@@ -1,7 +1,7 @@
 \section{Conclusion}
 \label{sec-conc}
 
-Future commodity systems could potentially have NVM as an integral part of the storage tier just as in the case of DRAM in current systems, though the capacity of NVM could be limited and may vary drastically. AC-BPFS provides a file system design that scales well and tunes itself according to the capacity of the individual memory devices in the storage tier, but at the same time provides consistency guarantees without replicating data across storage devices and still performs well. The policies used in both anti-cache manager and disk manager can be modified independently depending on the workload characteristics of the system.
+Future commodity systems can potentially include NVM as an integral part of the storage tier just as current systems include DRAM. However, the capacity of NVM is limited and may vary drastically in addition to being more expensive. AC-BPFS provides a file system design that scales well and tunes itself according to the capacity of the individual memory devices in the storage tier, while also providing similar performance and consistency guarantees without replicating data across storage devices. Further, AC-BPFS offers a modular and flexible system where the policies and mechanisms used in both anti-cache manager and disk manager can be modified independently, as per the workload and characteristics of the system.
 
 \section{Future Work}
 \label{sec-conc}
